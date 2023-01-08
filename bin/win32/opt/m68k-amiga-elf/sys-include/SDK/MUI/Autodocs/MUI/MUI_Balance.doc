@@ -1,0 +1,20 @@
+TABLE OF CONTENTS
+
+Balance.mui/Balance.mui
+Balance.mui/MUIA_Balance_Quiet
+Balance.mui/Balance.mui
+
+	The balance class is very simple and has no attributes.
+	Simply insert objects of this class somewhere in your
+	group (only horizontal or vertical groups, nothing
+	2-dimensional) allows your users to dynamically change
+	the weight of your children.
+Balance.mui/MUIA_Balance_Quiet
+
+    NAME
+	MUIA_Balance_Quiet -- (V20) [I..], LONG, 0x80427486
+
+    FUNCTION
+	If set to TRUE the balance object will show its frame only
+	if the mouse is located over the object. Otherwise it will
+	be invisible. Defaults to FALSE.

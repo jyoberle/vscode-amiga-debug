@@ -162,6 +162,7 @@ class AmigaDebugExtension {
 			vscode.commands.registerCommand('amiga.disassembleElf', (uri: vscode.Uri) => this.disassembleElf(uri)),
 			vscode.commands.registerCommand('amiga.bin-path', () => path.join(this.extensionPath, 'bin', process.platform)),
 			vscode.commands.registerCommand('amiga.initProject', this.initProject.bind(this)),
+			vscode.commands.registerCommand('amiga.initProjectWithLibs', this.initProjectWithLibs.bind(this)),
 			vscode.commands.registerCommand('amiga.terminal', this.openTerminal.bind(this)),
 			vscode.commands.registerCommand('amiga.exe2adf', (uri: vscode.Uri) => this.exe2adf(uri)),
 			vscode.commands.registerCommand('amiga.cleanTemp', this.cleanTemp.bind(this)),
@@ -344,6 +345,39 @@ class AmigaDebugExtension {
 		};
 		try {
 			const source = this.extensionPath + '/template';
+			const dest = vscode.workspace.workspaceFolders[0].uri.fsPath;
+			const files = fs.readdirSync(dest);
+			if(files.length) {
+				void vscode.window.showErrorMessage(`Failed to init project. Project folder is not empty`);
+				return;
+			}
+			copyRecursiveSync(source, dest);
+		} catch(err) {
+			void vscode.window.showErrorMessage(`Failed to init project. ${(err as Error).toString()}`);
+		}
+	}
+
+	private initProjectWithLibs() {
+		const copyRecursiveSync = (src: string, dest: string) => {
+			const exists = fs.existsSync(src);
+			const stats = exists && fs.statSync(src);
+			const isDirectory = exists && stats.isDirectory();
+			if(exists && isDirectory) {
+				try {
+					fs.mkdirSync(dest);
+				} catch(err) {
+					// don't care...
+				}
+				fs.readdirSync(src).forEach((childItemName) => {
+					copyRecursiveSync(path.join(src, childItemName),
+						path.join(dest, childItemName));
+				});
+			} else {
+				fs.copyFileSync(src, dest);
+			}
+		};
+		try {
+			const source = this.extensionPath + '/template_libs';
 			const dest = vscode.workspace.workspaceFolders[0].uri.fsPath;
 			const files = fs.readdirSync(dest);
 			if(files.length) {

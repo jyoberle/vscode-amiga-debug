@@ -1,0 +1,97 @@
+TABLE OF CONTENTS
+
+Menustrip.mui/Menustrip.mui
+Menustrip.mui/MUIA_Menustrip_Enabled
+Menustrip.mui/MUIM_Menustrip_ExitChange
+Menustrip.mui/MUIM_Menustrip_InitChange
+Menustrip.mui/MUIM_Menustrip_Popup
+Menustrip.mui/Menustrip.mui
+
+	Menustrip class is the base class for MUI's object oriented
+	menus. Its children are objects of Menu class, each of
+	them describes exactly one menu.
+
+	A Menustrip object doesn't feature many options itself, but
+	as a subclass of Family class, it simply acts as father for
+	multiple Menu objects.
+
+	The Menustrip object is usually specified as a child of
+	either Application class or window class with the
+	attributes MUIA_Application_Menustrip or
+	MUIA_Window_Menustrip.
+Menustrip.mui/MUIA_Menustrip_Enabled
+
+    NAME
+	MUIA_Menustrip_Enabled -- (V8 ) [ISG], BOOL, 0x8042815b
+
+    FUNCTION
+	Enable or disable the complete menu strip.
+Menustrip.mui/MUIM_Menustrip_ExitChange
+
+    NAME
+	MUIM_Menustrip_ExitChange (V20) 0x8042ce4d
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Menustrip_ExitChange);
+
+    FUNCTION
+	Terminates MUIM_Menustrip_InitChange state.
+
+    SEE ALSO
+	MUIM_Menustrip_InitChange
+Menustrip.mui/MUIM_Menustrip_InitChange
+
+    NAME
+	MUIM_Menustrip_InitChange (V20) 0x8042dcd9
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Menustrip_InitChange);
+
+    FUNCTION
+	Prepares a menustrip for dynamic adding/removing of items.
+	MUI 3 offers the possibility to dynamically add/remove
+	items from menustrips, even when the window that contains
+	these items is currently open. To be able to do this,
+	you must first put the menustrip into a special "exchange"
+	state by using this method. Then, you can add/remove
+	item at will. If you're done, use MUIM_Menustrip_ExitChange
+	to make MUI relayout the menustrip.
+
+    EXAMPLE
+	/* remove two items, add another one */
+
+	if (DoMethod(strip,MUIM_Menustrip_InitChange))
+	{
+	   DoMethod(strip,OM_REMMEMBER,someitem);
+	   DoMethod(strip,OM_REMMEMBER,someitem2);
+
+	   DoMethod(strip,OM_ADDMEMBER,somenewitem);
+
+	   DoMethod(strip,MUIM_Menustrip_ExitChange);
+	}
+
+    SEE ALSO
+	MUIM_Menustrip_ExitChange
+Menustrip.mui/MUIM_Menustrip_Popup
+
+    NAME
+	MUIM_Menustrip_Popup (V20) 0x80420e76
+
+    SYNOPSIS
+	DoMethod(obj,MUIM_Menustrip_Popup,Object *parent, ULONG flags, int x, int y);
+
+    FUNCTION
+	Open a menustrip for user input even without active user
+	interaction.
+
+    INPUTS
+	parent - the parent object relative to which the menustrip
+	         will be opened.
+	flags  - none defined yet, set to zero.
+	x, y   - additional horizontal and vertical offsets which
+	         will be added to the parent object's left/top
+	         coordinates.
+
+    RESULT
+    Returns the MUIA_UserData attribute of the selected item.
+

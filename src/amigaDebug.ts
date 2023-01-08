@@ -36,6 +36,9 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	chipmem?: string; // '256k', '512k', '1m', '1.5m' or '2m'
 	fastmem?: string; // '0', '64k', '128k', '256k', '512k', '1M', '2M', '4M', '8M'
 	slowmem?: string; // '0', '512k', '1M', '1.8M'
+	workbench?: string; // An absolute path to a workbench floppy (.adf) or workbench hard disk (.hdf) followed, for WindUAE only, by number of sectors, number of surfaces, reserved, block size (e.g. 32,1,2,512)
+	assigns?: string; // list of assign with their directories, e.g. MUI: dh2:MUI,LIBS: dh2:LIBS DH2:MUI/Libs
+	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available
 }
 
 class ExtendedVariable {
@@ -207,6 +210,34 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			return;
 		}
 
+		if(args.workbench !== undefined) {
+			if((isWin && !args.workbench.toLowerCase().endsWith(".adf") && !(new RegExp(/.hdf,\d+,\d+,\d+,\d+$/i).test(args.workbench))) 
+				|| (!isWin && !args.workbench.toLowerCase().endsWith(".adf") && !args.workbench.toLowerCase().endsWith(".hdf"))) {
+				this.sendErrorResponse(response, 103, `workbench should be adf or hdf.`);
+				return;				
+			}
+			
+			if(isWin) {
+				if(args.workbench.toLowerCase().endsWith(".adf")) {
+					if (!fs.existsSync(args.workbench)) {
+						this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
+						return;
+					}
+				} else {
+					if(!fs.existsSync(args.workbench.match(new RegExp(/^(.+?),/))[1])) {
+						this.sendErrorResponse(response, 103, `Unable to find Workbench at ` + args.workbench.match(new RegExp(/^(.+?),/))[1] + `.`);
+						return;					
+					}
+				}
+			} else {
+				// FS-UAE
+				if (!fs.existsSync(args.workbench)) {
+					this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
+					return;
+				}
+			}
+		}
+
 		if (isWin) {
 			// WinUAE:
 
@@ -355,6 +386,38 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			default:
 				config.delete('bogomem_size');
 			}
+			if(args.bsdSocket === undefined) {
+				config.delete("bsdsocket_emu");
+			} else {
+				config.set("bsdsocket_emu",args.bsdSocket?"true":"false");
+			}
+			
+			if(args.workbench === undefined) {
+				config.delete("hardfile2");
+				config.delete("uaehf2");
+				config.delete("floppy0");
+				config.delete("uaehf0");
+				config.delete(" filesystem2");
+				config.delete("uaehf1");
+				config.delete("floppy_speed");
+			} else {
+				if(args.workbench.toLowerCase().endsWith(".adf")) {
+					config.set("floppy0",args.workbench);
+					config.set("floppy_speed","0");
+					config.delete("hardfile2");
+					config.delete("uaehf2");
+				} else {
+					config.set("hardfile2","rw,DH2:" + args.workbench + ",-128,,uae1");
+					config.set("uaehf2","hdf,rw,DH2:" + args.workbench + ",-128,,uae1");
+					config.delete("floppy0");
+					config.delete("floppy_speed");
+				}
+				config.delete("filesystem");
+				config.set("filesystem2", "rw,dh0:dh0:" + dh0Path + ",128");
+				config.set("uaehf0", "dir,rw,dh0:dh0:" + dh0Path + ",128");
+				config.set(" filesystem2", "rw,dh1:dh1:" + path.dirname(args.program) + ",-128");
+				config.set("uaehf1", "dir,rw,dh1:dh1:" + path.dirname(args.program) + ",-128");
+			}
 		} else {
 			// FS-UAE:
 			switch(machine) {
@@ -461,6 +524,36 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			default:
 				config.delete('slow_memory');
 			}
+
+			if(args.bsdSocket === undefined) {
+				config.delete("bsdsocket_library");
+			} else {
+				config.set("bsdsocket_library",args.bsdSocket?"1":"0");
+			}
+			
+			if(args.workbench === undefined) {
+				config.delete("floppy_drive_0");
+				config.delete("floppy_drive_speed");
+				config.delete("hard_drive_2");
+				config.delete("hard_drive_0_priority");
+				config.delete("hard_drive_1_priority");
+			} else {
+				if(args.workbench.toLowerCase().endsWith(".adf")) {
+					config.set("floppy_drive_0",args.workbench);
+					config.set("floppy_drive_speed","0");
+					config.delete("hard_drive_2");
+					config.delete("hard_drive_0_priority");
+					config.delete("hard_drive_1_priority");
+				} else {
+					config.set("hard_drive_2",args.workbench);
+					config.delete("floppy_drive_0");
+					config.delete("floppy_drive_speed");
+				}
+				config.set("hard_drive_0",dh0Path);
+				config.set("hard_drive_0_priority","128");
+				config.set("hard_drive_1",path.dirname(args.program));
+				config.set("hard_drive_1_priority","-128");
+			}
 		}
 
 		try {
@@ -501,6 +594,19 @@ export class AmigaDebugSession extends LoggingDebugSession {
 		const ssPath = path.join(dh0Path, "s/startup-sequence");
 		try {
 			let startupSequence = '';
+			
+			if(args.workbench !== undefined) {
+				if(args.workbench.toLowerCase().endsWith(".adf")) {
+					startupSequence += `DF0:C/assign C: DF0:C\nC:assign SYS: DF0:\nC:assign S: DF0:S\nC:assign LIBS: DF0:LIBS DH0:MUI/Libs\nC:assign DEVS: DF0:Devs\nC:assign FONTS: DF0:Fonts\nC:assign L: DF0:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DF0:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+				} else {
+					startupSequence += `DH2:C/assign C: DH2:C\nC:assign SYS: DH2:\nC:assign S: DH2:S\nC:assign LIBS: DH2:LIBS DH0:MUI/Libs\nC:assign DEVS: DH2:Devs\nC:assign FONTS: DH2:Fonts\nC:assign L: DH2:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DH2:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+				}
+			}
+			
+			if(args.assigns !== undefined) {
+				args.assigns.split(",").forEach((n, i) => {startupSequence += `C:assign ${n}\n`});
+			}
+
 			if(args.endcli)
 				startupSequence += `cd dh1:\nrun >nil: <nil: ${debugTrigger} >nil: <nil:\nendcli >nil:\n`;
 			else
