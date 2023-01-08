@@ -20,6 +20,12 @@ template/.vscode/settings.json
 !template/out/
 template/out/*
 !template/out/DELETE.ME
+template_libs/obj8mingw
+template_libs/obj
+template_libs/.vscode/settings.json
+!template_libs/out/
+template_libs/out/*
+!template_libs/out/DELETE.ME
 src/test/suite/data/private
 src/test/suite/data/output
 package.json

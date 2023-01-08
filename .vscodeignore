@@ -30,3 +30,6 @@ template/obj/**
 !template/obj/DELETE.ME
 template/out/**
 !template/out/DELETE.ME
+!template_libs/obj/DELETE.ME
+template_libs/out/**
+!template_libs/out/DELETE.ME
