@@ -6,7 +6,7 @@
 	"repository": {
 		"url": "https://github.com/jyoberle/vscode-amiga-debug"
 	},
-	"version": "1.6.8",
+	"version": "1.7.1",
 	"license": "GPL-3.0-or-later",
 	"engines": {
 		"vscode": "^1.46.0"
@@ -91,7 +91,7 @@
 				"category": "Amiga",
 				"command": "amiga.initProjectWithLibs",
 				"title": "Init Project With Libs"
-			},
+			},			
 			{
 				"category": "Amiga",
 				"command": "amiga.cleanTemp",
@@ -312,6 +312,11 @@
 								"description": "Run with EndCLI so you can call CloseWorkBench()",
 								"default": false
 							},
+							"stack": {
+								"type": "string",
+								"description": "Override stack size (in bytes)",
+								"default": ""
+							},
 							"uaelog": {
 								"type": "boolean",
 								"description": "Show WinUAE log output in debug console",
@@ -369,9 +374,23 @@
 									"1.8M"
 								]
 							},
+							"ntsc": {
+								"type": "boolean",
+								"description": "NTSC mode",
+								"default": false
+							},
+							"emuargs": {
+								"type": "array",
+								"items": {
+									"type": "string",
+									"title": "argument"
+								},
+								"description": "Addtional CLI arguments for emulator",
+								"default": []
+							},
 							"workbench": {
 								"type": "string",
-								"description": "Absolute path to a Workbench floppy (.adf) or hard disk (.vhd).",
+								"description": "Absolute path to a Workbench floppy (.adf), hard disk (.vhd) or directory virtual hard disk.",
 								"default": ""
 							},
 							"assigns": {
@@ -383,7 +402,7 @@
 								"type": "boolean",
 								"description": "Ask UAE to make bsdsocket lib available.",
 								"default": false
-							}							
+							}
 						}
 					}
 				},
@@ -541,7 +560,7 @@
 						"type": "string",
 						"default": "c:/amiga/WorkBench3.1.adf",
 						"description": "Path to the workbench floppy or hard disk."
-					}					
+					}
 				}
 			}
 		]

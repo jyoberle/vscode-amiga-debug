@@ -32,13 +32,16 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	kickstart?: string; // An absolute path to a Kickstart ROM; if not specified, AROS will be used
 	cpuboard?: string; // An absolute path to a CPU Board Expansion ROM
 	endcli?: boolean;
+	stack?: string;
 	uaelog?: boolean;
 	chipmem?: string; // '256k', '512k', '1m', '1.5m' or '2m'
 	fastmem?: string; // '0', '64k', '128k', '256k', '512k', '1M', '2M', '4M', '8M'
 	slowmem?: string; // '0', '512k', '1M', '1.8M'
-	workbench?: string; // An absolute path to a workbench floppy (.adf) or workbench hard disk (.hdf) followed, for WindUAE only, by number of sectors, number of surfaces, reserved, block size (e.g. 32,1,2,512)
+	ntsc?: boolean; // NTSC mode
+	emuargs?: string[]; // Additional CLI arguments for emulator
+	workbench?: string; // An absolute path to a workbench directory, a workbench floppy (.adf) or a workbench hard disk (.hdf) followed, for WinUAE only, by number of sectors, number of surfaces, reserved, block size (e.g. 32,1,2,512)
 	assigns?: string; // list of assign with their directories, e.g. MUI: dh2:MUI,LIBS: dh2:LIBS DH2:MUI/Libs
-	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available
+	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available	
 }
 
 class ExtendedVariable {
@@ -189,12 +192,8 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			return out;
 		};
 
-		const configExt = isWin ? "uae" : "fs-uae";
-		const defaultPath = path.join(binPath, "default." + configExt);
+		const defaultPath = path.join(binPath, "default.uae");
 		let config = new Map<string, string>();
-		try {
-			config = parseCfg(fs.readFileSync(defaultPath, 'utf-8'));
-		} catch(e) { /**/ }
 
 		const exePath = path.dirname(args.program);
 		const exeName = path.basename(args.program) + ".exe";
@@ -209,37 +208,61 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			this.sendErrorResponse(response, 103, `Unable to find CPU Board Extension ROM at ${args.cpuboard}.`);
 			return;
 		}
-
 		if(args.workbench !== undefined) {
-			if((isWin && !args.workbench.toLowerCase().endsWith(".adf") && !(new RegExp(/.hdf,\d+,\d+,\d+,\d+$/i).test(args.workbench))) 
-				|| (!isWin && !args.workbench.toLowerCase().endsWith(".adf") && !args.workbench.toLowerCase().endsWith(".hdf"))) {
-				this.sendErrorResponse(response, 103, `workbench should be adf or hdf.`);
-				return;				
-			}
-			
 			if(isWin) {
+				// WinUAE
 				if(args.workbench.toLowerCase().endsWith(".adf")) {
-					if (!fs.existsSync(args.workbench)) {
+					if(!fs.existsSync(args.workbench)) {
 						this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
 						return;
 					}
 				} else {
-					if(!fs.existsSync(args.workbench.match(new RegExp(/^(.+?),/))[1])) {
-						this.sendErrorResponse(response, 103, `Unable to find Workbench at ` + args.workbench.match(new RegExp(/^(.+?),/))[1] + `.`);
-						return;					
+					if(new RegExp(/.hdf,\d+,\d+,\d+,\d+$/i).test(args.workbench)) {
+						if(!fs.existsSync(args.workbench.match(new RegExp(/^(.+?),/))[1])) {
+							this.sendErrorResponse(response, 103, `Unable to find Workbench at ` + args.workbench.match(new RegExp(/^(.+?),/))[1] + `.`);
+							return;					
+						}
+					} else {
+						// The only possibility remaining is that workbench points to a directory
+						if(!fs.existsSync(args.workbench)) {
+							this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
+							return;
+						}
+						
+						if(!fs.lstatSync(args.workbench).isDirectory()) {
+							this.sendErrorResponse(response, 103, `${args.workbench} is not a directory.`);
+							return;
+						}
 					}
 				}
 			} else {
 				// FS-UAE
-				if (!fs.existsSync(args.workbench)) {
-					this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
-					return;
+				if(args.workbench.toLowerCase().endsWith(".adf") || args.workbench.toLowerCase().endsWith(".hdf")) {
+					if(!fs.existsSync(args.workbench)) {
+						this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
+						return;
+					}
+				} else {
+					// The only possibility remaining is that workbench points to a directory
+					if(!fs.existsSync(args.workbench)) {
+						this.sendErrorResponse(response, 103, `Unable to find Workbench at ${args.workbench}.`);
+						return;
+					}
+						
+					if(!fs.lstatSync(args.workbench).isDirectory()) {
+						this.sendErrorResponse(response, 103, `${args.workbench} is not a directory.`);
+						return;
+					}					
 				}
 			}
 		}
-
+		
 		if (isWin) {
 			// WinUAE:
+
+			try {
+				config = parseCfg(fs.readFileSync(defaultPath, 'utf-8'));
+			} catch(e) { /**/ }
 
 			// mandatory
 			config.set('use_gui', 'no');
@@ -309,6 +332,8 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			// debugging options
 			config.set('debugging_features', 'gdbserver');
 			config.set('debugging_trigger', debugTrigger);
+			// video
+			config.set('ntsc', args.ntsc ? 'true' : 'false');
 
 			// safety
 			config.delete('statefile');
@@ -386,6 +411,7 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			default:
 				config.delete('bogomem_size');
 			}
+
 			if(args.bsdSocket === undefined) {
 				config.delete("bsdsocket_emu");
 			} else {
@@ -400,23 +426,39 @@ export class AmigaDebugSession extends LoggingDebugSession {
 				config.delete(" filesystem2");
 				config.delete("uaehf1");
 				config.delete("floppy_speed");
+				config.delete("  filesystem2");
 			} else {
 				if(args.workbench.toLowerCase().endsWith(".adf")) {
+					// It is a floppy
 					config.set("floppy0",args.workbench);
 					config.set("floppy_speed","0");
 					config.delete("hardfile2");
 					config.delete("uaehf2");
 				} else {
-					config.set("hardfile2","rw,DH2:" + args.workbench + ",-128,,uae1");
-					config.set("uaehf2","hdf,rw,DH2:" + args.workbench + ",-128,,uae1");
-					config.delete("floppy0");
-					config.delete("floppy_speed");
+					if(new RegExp(/.hdf,\d+,\d+,\d+,\d+$/i).test(args.workbench)) {
+						// It is a .vhd hard disk
+						config.set("hardfile2","rw,DH2:" + args.workbench + ",-128,,uae1");
+						config.set("uaehf2","hdf,rw,DH2:" + args.workbench + ",-128,,uae1");
+						config.delete("floppy0");
+						config.delete("floppy_speed");
+					} else {
+						// It is a directory
+						config.set("  filesystem2","rw,DH2:DH2:" + args.workbench + ",-128");
+						config.set("uaehf2","dir,rw,DH2:DH2:" + args.workbench + ",-128");
+					}
 				}
 				config.delete("filesystem");
 				config.set("filesystem2", "rw,dh0:dh0:" + dh0Path + ",128");
 				config.set("uaehf0", "dir,rw,dh0:dh0:" + dh0Path + ",128");
 				config.set(" filesystem2", "rw,dh1:dh1:" + path.dirname(args.program) + ",-128");
 				config.set("uaehf1", "dir,rw,dh1:dh1:" + path.dirname(args.program) + ",-128");
+			}
+
+			try {
+				fs.writeFileSync(defaultPath, stringifyCfg(config));
+			} catch(e) {
+				this.sendErrorResponse(response, 103, `Unable to write emulator config ${defaultPath}.`);
+				return;
 			}
 		} else {
 			// FS-UAE:
@@ -440,14 +482,14 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			config.set('hard_drive_0', dh0Path);
 			config.set('hard_drive_1', exePath);
 			// debugging options
-			config.set('remote_debugger', "1000");
+			config.set('remote_debugger', "20");
 			config.set('remote_debugger_port', "2345");
 			config.set('remote_debugger_trigger', debugTrigger);
+			// video
+			config.set('ntsc_mode', args.ntsc ? '1' : '0');
 
 			if(args.kickstart !== undefined) {
 				config.set('kickstart_file', args.kickstart);
-			} else {
-				config.delete('kickstart_file');
 			}
 			// args.cpuboard: no FS-UAE equivalent?
 
@@ -468,8 +510,6 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			case '2m':
 				config.set('chip_memory', '2048');
 				break;
-			default:
-				config.delete('chip_memory');
 			}
 			switch(args.fastmem?.toLowerCase()) {
 			case '0k':
@@ -503,8 +543,6 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			case '8m':
 				config.set('fast_memory', '8192');
 				break;
-			default:
-				config.delete('fast_memory');
 			}
 			switch(args.slowmem?.toLowerCase()) {
 			case '0k':
@@ -521,8 +559,6 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			case '1.8m':
 				config.set('slow_memory', '1792');
 				break;
-			default:
-				config.delete('slow_memory');
 			}
 
 			if(args.bsdSocket === undefined) {
@@ -545,6 +581,7 @@ export class AmigaDebugSession extends LoggingDebugSession {
 					config.delete("hard_drive_0_priority");
 					config.delete("hard_drive_1_priority");
 				} else {
+					// Workbench is either .vhd or directory
 					config.set("hard_drive_2",args.workbench);
 					config.delete("floppy_drive_0");
 					config.delete("floppy_drive_speed");
@@ -553,26 +590,30 @@ export class AmigaDebugSession extends LoggingDebugSession {
 				config.set("hard_drive_0_priority","128");
 				config.set("hard_drive_1",path.dirname(args.program));
 				config.set("hard_drive_1_priority","-128");
-			}
+			}			
 		}
 
-		try {
-			fs.writeFileSync(defaultPath, stringifyCfg(config));
-		} catch(e) {
-			this.sendErrorResponse(response, 103, `Unable to write emulator config ${defaultPath}.`);
-			return;
-		}
-
-		// all WinUAE options now in config file
 		const emuPath = isWin
 			? path.join(binPath, "winuae-gdb.exe")
 			: path.join(binPath, "fs-uae", "fs-uae");
 
-		const emuArgs = isWin ? [ '-portable' ] : [ defaultPath ];
+		if(args.emuargs === undefined)
+			args.emuargs = [];
+
+		const emuArgs = [
+			...(isWin
+				// all WinUAE options now in config file
+				? [ '-portable' ]
+				// FS-UAE options as args
+				: [...config].map(([k, v]) => `--${k}=${v}`)),
+			...args.emuargs
+		];
 
 		// defaults - from package.json
 		if(args.endcli === undefined)
 			args.endcli = false;
+		if(args.stack === undefined)
+			args.stack = '';
 		if(args.uaelog === undefined)
 			args.uaelog = true;
 
@@ -606,7 +647,8 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			if(args.assigns !== undefined) {
 				args.assigns.split(",").forEach((n, i) => {startupSequence += `C:assign ${n}\n`});
 			}
-
+			if(args.stack !== '')
+				startupSequence += `stack ${args.stack}\n`;
 			if(args.endcli)
 				startupSequence += `cd dh1:\nrun >nil: <nil: ${debugTrigger} >nil: <nil:\nendcli >nil:\n`;
 			else
@@ -643,7 +685,6 @@ export class AmigaDebugSession extends LoggingDebugSession {
 		const env = {
 			...process.env,
 			LD_LIBRARY_PATH: ".", // Allow Linux fs-uae to find bundled .so files
-			DYLD_FALLBACK_LIBRARY_PATH: ".", // Allow Mac fs-uae to find bundled .dylib files
 		};
 		emu = childProcess.spawn(emuPath, emuArgs, { stdio: 'ignore', detached: true, env, cwd });
 		//emu.stdout.on('data', (data) => { console.log(`stdout: ${data}`); });

@@ -3,6 +3,22 @@
 All notable changes to the "amiga-debug" extension will be documented in this file.
 See PR links for more information.
 
+## 1.7.1
+- FIX: 1.7.0 would not start debugging if launch.json was missing `emuargs` [#211](https://github.com/BartmanAbyss/vscode-amiga-debug/issues/211)
+
+## 1.7.0
+- CHG: update to [latest WinUAE (41010)](https://github.com/tonioni/WinUAE/commit/239062dc7c49838b41ac54e5901522eeb78f0ef0)
+- FIX: Only write m68k settings for Amiga projects [PR#208](https://github.com/BartmanAbyss/vscode-amiga-debug/pull/208)
+- NEW: Emulator config improvements [PR#209](https://github.com/BartmanAbyss/vscode-amiga-debug/pull/209)
+- NEW: profiler: get AGA colors from WinUAE
+- NEW: launch.json: new configuration attribute "stack" to override the default stack size (in bytes)
+
+## 1.6.9
+- FIX: debugger: fixed crash on launch when using encrypted Kickstart [#199](https://github.com/BartmanAbyss/vscode-amiga-debug/issues/199)
+- FIX: screen: don't overwrite OCS colors with AGA colors from different banks
+- NEW: screen: support AGA colors, show BPLCON3 (TODO: get AGA colors from .profile file)
+- FIX: Builds using MacOS 11 for better compatibility; Includes updated binaries for GCC, binutils and FS-UAE [PR#197](https://github.com/BartmanAbyss/vscode-amiga-debug/pull/197)
+
 ## 1.6.8
 - NEW: update gcc to 12.2.0, binutils, GNU gdb (GDB) 13.0.50.20221127-git
 - FIX: WinUAE/FS-UAE: don't enable "Full stack frame tracking" (caused WinUAE to crash due to stack overflow in certain situations) [PR#183](https://github.com/BartmanAbyss/vscode-amiga-debug/pull/183)
