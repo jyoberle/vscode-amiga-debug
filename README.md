@@ -10,6 +10,8 @@ This fork is based on the marvellous vscode-amiga-debug extension [vscode-amiga-
 - MUI is also included on the compilation side (SDK v3.9) and on the execution side (libraries v3.8).
 - Custom libraries can be declared through the setting of assigns.
 - The bsdsocket.library of UAE can also be enabled.
+- Equivalent of amiga.lib, alib (from https://github.com/jyoberle/alib), is included.
+- Additional commands to be added at the end of the startup-sequence can be specified.
 	
 ## Quick-start
 0. Install the extension from the Visual Studio Code Marketplace
@@ -30,7 +32,8 @@ assign MUI: DH2:MUI<br />
 assign LIBS: DH2:LIBS DH2:MUI/Libs<br />
 The purpose is to add the ability to declare your own libraries residing on your hard file or directory virtual hard disk. These latest are defined as DH2: (DH0: is a directory virtual hard drive, used for booting and where the
  startup-sequence is located, and DH1: is the directory virtual hard drive containing your compiled program). Thus, the content of DH2: is never modified.
-- At last, `"bsdSocket"` can be set to true (e.g. "bsdSocket":true) to enable the bsdsocket.library of UAE.
+- `"bsdSocket"` can be set to true (e.g. "bsdSocket":true) to enable the bsdsocket.library of UAE.
+- At last, with `"cmdList"`, you can specify a list of commands (separated by commas) which will be added at the end of the startup-sequence, e.g. "cmdList":"df0:System/rexxmast".
 
 ![UAE_HardFile](screen_uae_hardfile.png)
 
@@ -51,9 +54,13 @@ C:assign CLIPS: RAM:Clipboards<br />
 C:assign ENV: RAM:ENV<br />
 C:assign LOCALE: DH2:Locale dh0:MUI/Locale<br />
 C:assign PRINTERS: DEVS:Printers<br />
-- At last, when you define `"assigns"`, it adds your assigns at the end of the startup-sequence (see above for an example).
+- At last, when you define `"assigns"`, it adds your assigns at the end of the startup-sequence (see above for an example). And in case you define additional commands with `"cmdList"`, they are also added at the end of the startup-sequence.
 
 ## Change Log (fork only)
+
+### 1.7.2
+- Equivalent of amiga.lib, alib (from https://github.com/jyoberle/alib), included
+- Added the ability to specify additional commands for the startup-sequence
 
 ### 1.7.1
 - Added the ability to use a directory virtual hard disk for the workbench

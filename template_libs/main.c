@@ -5,15 +5,20 @@
 #undef NO_INLINE_STDARG
 #include <proto/utility.h>
 #include <proto/icon.h>
+#include <clib/alib_protos.h>
 #include "g_misc.h"
-#include "g_aminlib.h"
 
 #define MUI_LIB_VERSION 19L
 
-struct ExecBase *SysBase;
-struct IntuitionBase *IntuitionBase = NULL;
+// We need to declare the libraries as "externally_visible" since we are using the option -fwhole-program in the Makefile
+__attribute__((externally_visible)) struct ExecBase *SysBase;
+__attribute__((externally_visible)) struct IntuitionBase *IntuitionBase = NULL;
+__attribute__((externally_visible)) struct DosLibrary *DOSBase = NULL;
+__attribute__((externally_visible)) struct UtilityBase *UtilityBase = NULL;
+__attribute__((externally_visible)) struct GfxBase *GfxBase = NULL;
+__attribute__((externally_visible)) struct Library *CxBase = NULL;
+__attribute__((externally_visible)) struct Library *IconBase = NULL;
 struct Library *MUIMasterBase = NULL;
-struct UtilityBase *UtilityBase = NULL;
 
 // This function is based on the MUI example "ShowHide" which can be downloaded from https://github.com/amiga-mui/muidev/releases/tag/MUI-3.9-2015R1
 void MUIShowHide(void)
@@ -101,11 +106,23 @@ void cleanUP(void)
 	if(IntuitionBase != NULL)
 		CloseLibrary((struct Library *)IntuitionBase);
 
-	if(MUIMasterBase != NULL)
-		CloseLibrary(MUIMasterBase);
+	if(DOSBase != NULL)
+		CloseLibrary((struct Library *)DOSBase);
 
 	if(UtilityBase != NULL)
 		CloseLibrary((struct Library *)UtilityBase);
+
+	if(GfxBase != NULL)
+		CloseLibrary((struct Library *)GfxBase);
+
+	if(CxBase != NULL)
+		CloseLibrary(CxBase);
+
+	if(IconBase != NULL)
+		CloseLibrary(IconBase);
+
+	if(MUIMasterBase != NULL)
+		CloseLibrary(MUIMasterBase);
 }
 
 // We need to redefine some MUI functions because gcc, due to optimisations, is not always pushing all tags on the stack
@@ -224,13 +241,16 @@ int main(int argc, char **argv)
 		wbmsg = (struct WBStartup *)GetMsg(&proc->pr_MsgPort);
 	}
 
-	// We open the required libraries
-	// The utility library is used in the aminlib.c file (call of CallHookPkt function)
+	// We open the libraries (required since we are linking with alib; please see https://github.com/jyoberle/alib for details)
 	IntuitionBase = (struct IntuitionBase *)OpenLibrary((CONST_STRPTR)"intuition.library",0L);
+	DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR)"dos.library",0L);
 	UtilityBase = (struct UtilityBase *)OpenLibrary((CONST_STRPTR)"utility.library",0L);
+	GfxBase = (struct GfxBase *)OpenLibrary("graphics.library",0);
+	CxBase = OpenLibrary("commodities.library",0);
+	IconBase = OpenLibrary("icon.library",0);
 	MUIMasterBase = OpenLibrary("muimaster.library",MUI_LIB_VERSION);
 
-	if (IntuitionBase && MUIMasterBase && UtilityBase)
+	if(IntuitionBase && DOSBase && UtilityBase && GfxBase && CxBase && IconBase && MUIMasterBase)
 	{
 		// If all libs are available, we open the MUI window
 		MUIShowHide();

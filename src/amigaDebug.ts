@@ -42,6 +42,7 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	workbench?: string; // An absolute path to a workbench directory, a workbench floppy (.adf) or a workbench hard disk (.hdf) followed, for WinUAE only, by number of sectors, number of surfaces, reserved, block size (e.g. 32,1,2,512)
 	assigns?: string; // list of assign with their directories, e.g. MUI: dh2:MUI,LIBS: dh2:LIBS DH2:MUI/Libs
 	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available	
+	cmdList?: string; // list of commands (separated by commas) to be added at the end of the startup-sequence, e.g. df0:System/rexxmast
 }
 
 class ExtendedVariable {
@@ -487,6 +488,8 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			config.set('remote_debugger_trigger', debugTrigger);
 			// video
 			config.set('ntsc_mode', args.ntsc ? '1' : '0');
+			// specify savestate dir so we don't overwrite user's default FS-UAE save slots
+			config.set('state_dir', path.join(binPath, "fs-uae"));
 
 			if(args.kickstart !== undefined) {
 				config.set('kickstart_file', args.kickstart);
@@ -647,6 +650,11 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			if(args.assigns !== undefined) {
 				args.assigns.split(",").forEach((n, i) => {startupSequence += `C:assign ${n}\n`});
 			}
+
+			if(args.cmdList !== undefined) {
+				args.cmdList.split(",").forEach((n, i) => {startupSequence += `${n}\n`});
+			}
+			
 			if(args.stack !== '')
 				startupSequence += `stack ${args.stack}\n`;
 			if(args.endcli)
@@ -682,6 +690,10 @@ export class AmigaDebugSession extends LoggingDebugSession {
 
 		// launch Emulator
 		const cwd = dirname(emuPath);
+		//const cwd = isWin
+		//	? dirname(emuPath)
+		//	// CWD determines location for debug_save/debug_load on FS-UAE
+		//	: vscode.workspace.workspaceFolders[0].uri.fsPath;
 		const env = {
 			...process.env,
 			LD_LIBRARY_PATH: ".", // Allow Linux fs-uae to find bundled .so files
