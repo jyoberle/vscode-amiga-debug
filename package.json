@@ -2,11 +2,11 @@
 	"name": "amiga-debug-job",
 	"displayName": "Amiga C/C++ Compile, Debug & Profile (fork with libs support)",
 	"publisher": "JOB",
-	"description": "One-stop VS Code Extension to compile, debug and profile Amiga C/C++ programs compiled by the bundled gcc 12.2 with the bundled WinUAE/FS-UAE. This fork provides support for libraries",
+	"description": "One-stop VS Code Extension to compile, debug and profile Amiga C/C++ programs compiled by the bundled gcc 13.2 with the bundled WinUAE/FS-UAE. This fork provides support for libraries",
 	"repository": {
 		"url": "https://github.com/jyoberle/vscode-amiga-debug"
 	},
-	"version": "1.7.2",
+	"version": "1.7.5",
 	"license": "GPL-3.0-or-later",
 	"engines": {
 		"vscode": "^1.46.0"
