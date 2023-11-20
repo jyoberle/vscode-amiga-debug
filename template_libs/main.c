@@ -8,6 +8,12 @@
 #include <clib/alib_protos.h>
 #include "g_misc.h"
 
+#define OPTION_USE_CLIB2 0
+
+#if OPTION_USE_CLIB2
+#include <stdlib_headers.h>
+#endif
+
 #define MUI_LIB_VERSION 19L
 
 // We need to declare the libraries as "externally_visible" since we are using the option -fwhole-program in the Makefile
@@ -19,6 +25,83 @@ __attribute__((externally_visible)) struct GfxBase *GfxBase = NULL;
 __attribute__((externally_visible)) struct Library *CxBase = NULL;
 __attribute__((externally_visible)) struct Library *IconBase = NULL;
 struct Library *MUIMasterBase = NULL;
+
+#if OPTION_USE_CLIB2
+// Declare all clib2 constructors and destructors
+extern int __ctor_stdlib_memory_init(void);
+extern int __ctor_stdlib_program_name_init(void);
+extern int __ctor_stdio_init(void);
+extern int __ctor_stdio_file_init(void);
+extern int __ctor_math_init(void);
+extern int __ctor_socket_init(void);
+extern int __ctor_arg_init(void);
+extern int __ctor_rexxvars_init(void);
+extern int __ctor_dirent_init(void);
+extern int __ctor_locale_init(void);
+extern int __ctor_clock_init(void);
+extern int __ctor_unistd_init(void);
+extern int __ctor_timer_init(void);
+extern int __ctor_usergroup_init(void);
+
+extern int __dtor_usergroup_exit();
+extern int __dtor_timer_exit();
+extern int __dtor_unistd_exit();
+extern int __dtor_locale_exit();
+extern int __dtor_dirent_exit();
+extern int __dtor_rexxvars_exit();
+extern int __dtor_socket_exit();
+extern int __dtor_math_exit();
+extern int __dtor_workbench_exit();
+extern int __dtor_stdio_exit();
+extern int __dtor_stdlib_program_name_exit();
+extern int __dtor_stdlib_memory_exit();
+extern int __dtor___wildcard_expand_exit();
+extern int __dtor_alloca_exit();
+extern int __dtor___setenv_exit();
+extern int __dtor___chdir_exit();
+#endif
+
+#if OPTION_USE_CLIB2
+// Calls all constructors
+static VOID fcntCallCtor(void)
+{	
+	__ctor_stdlib_memory_init();
+	__ctor_stdlib_program_name_init();
+	__ctor_stdio_init();
+	__ctor_stdio_file_init();
+	__ctor_math_init();
+	__ctor_socket_init();
+	__ctor_arg_init();
+	__ctor_rexxvars_init();
+	__ctor_dirent_init();
+	__ctor_locale_init();
+	__ctor_clock_init();
+	__ctor_unistd_init();
+	__ctor_timer_init();
+	__ctor_usergroup_init();
+}
+
+// Calls all destructors
+static VOID fcntCallDtor(void)
+{	
+	__dtor___wildcard_expand_exit();
+	__dtor_alloca_exit();
+	__dtor___setenv_exit();
+	__dtor___chdir_exit();
+	__dtor_usergroup_exit();
+	__dtor_timer_exit();
+	__dtor_unistd_exit();
+	__dtor_locale_exit();
+	__dtor_dirent_exit();
+	__dtor_rexxvars_exit();
+	__dtor_socket_exit();
+	__dtor_math_exit();
+	__dtor_workbench_exit();
+	__dtor_stdio_exit();
+	__dtor_stdlib_program_name_exit();
+	__dtor_stdlib_memory_exit();
+}
+#endif
 
 // This function is based on the MUI example "ShowHide" which can be downloaded from https://github.com/amiga-mui/muidev/releases/tag/MUI-3.9-2015R1
 void MUIShowHide(void)
@@ -241,6 +324,11 @@ int main(int argc, char **argv)
 		wbmsg = (struct WBStartup *)GetMsg(&proc->pr_MsgPort);
 	}
 
+#if OPTION_USE_CLIB2
+	__WBenchMsg = wbmsg; // this variable is used in __ctor_arg_init()
+	__exit_blocked = FALSE; // this will push exit() and similar functions to longjmp to target set by setjmp()
+#endif
+
 	// We open the libraries (required since we are linking with alib; please see https://github.com/jyoberle/alib for details)
 	IntuitionBase = (struct IntuitionBase *)OpenLibrary((CONST_STRPTR)"intuition.library",0L);
 	DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR)"dos.library",0L);
@@ -252,8 +340,24 @@ int main(int argc, char **argv)
 
 	if(IntuitionBase && DOSBase && UtilityBase && GfxBase && CxBase && IconBase && MUIMasterBase)
 	{
+#if OPTION_USE_CLIB2
+		__UtilityBase = UtilityBase; // we need to add this because of macro DECLARE_UTILITYBASE()
+
+		if(setjmp(__exit_jmp_buf) != 0)
+			goto out; // target for exit
+
+		fcntCallCtor(); // call the constructors
+#endif
+
 		// If all libs are available, we open the MUI window
 		MUIShowHide();
+
+#if OPTION_USE_CLIB2
+		printf("This is an example of use of clib2\n");
+
+		out:
+		fcntCallDtor(); // call the destructors
+#endif
 	}
 
 	// Before leaving, we close all libraries

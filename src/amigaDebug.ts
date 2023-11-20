@@ -641,9 +641,9 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			
 			if(args.workbench !== undefined) {
 				if(args.workbench.toLowerCase().endsWith(".adf")) {
-					startupSequence += `DF0:C/assign C: DF0:C\nC:assign SYS: DF0:\nC:assign S: DF0:S\nC:assign LIBS: DF0:LIBS DH0:MUI/Libs\nC:assign DEVS: DF0:Devs\nC:assign FONTS: DF0:Fonts\nC:assign L: DF0:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DF0:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+					startupSequence += `DF0:C/assign C: DF0:C\nC:assign SYS: DF0:\nC:assign S: DF0:S\nC:assign LIBS: DF0:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DF0:Devs\nC:assign FONTS: DF0:Fonts\nC:assign L: DF0:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DF0:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
 				} else {
-					startupSequence += `DH2:C/assign C: DH2:C\nC:assign SYS: DH2:\nC:assign S: DH2:S\nC:assign LIBS: DH2:LIBS DH0:MUI/Libs\nC:assign DEVS: DH2:Devs\nC:assign FONTS: DH2:Fonts\nC:assign L: DH2:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DH2:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+					startupSequence += `DH2:C/assign C: DH2:C\nC:assign SYS: DH2:\nC:assign S: DH2:S\nC:assign LIBS: DH2:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DH2:Devs\nC:assign FONTS: DH2:Fonts\nC:assign L: DH2:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DH2:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
 				}
 			}
 			

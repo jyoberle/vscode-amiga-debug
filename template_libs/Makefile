@@ -19,7 +19,8 @@ vasm_sources := $(wildcard *.asm) $(wildcard $(addsuffix *.asm, $(subdirs)))
 vasm_objects := $(addprefix obj/, $(patsubst %.asm,%.o,$(notdir $(vasm_sources))))
 objects := $(cpp_objects) $(c_objects) $(s_objects) $(vasm_objects)
 # This is the place to declare the static libraries
-static_libs := -lalib
+static_libs := -lc -lm -ldebug -lnet -lunix -lc -lamiga # to use Amiga paths
+#static_libs := -lm -ldebug -lnet -lunix -lc -lamiga # to use UNIX paths
 
 # https://stackoverflow.com/questions/4036191/sources-from-subdirectories-in-makefile/4038459
 # http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
@@ -40,7 +41,7 @@ endif
 # The directory where the static libraries are located
 LIBSDIR = $(abspath libs)
 
-CCFLAGS = -g -MP -MMD -m68000 -Ofast -nostdlib -Wextra -Wno-unused-function -Wno-volatile-register-var -fomit-frame-pointer -fno-tree-loop-distribution -flto -fwhole-program -fno-exceptions -I${MUISDKDIR} -I$(LIBSDIR)/alib -D__stdargs=
+CCFLAGS = -g -MP -MMD -m68000 -Ofast -nostdlib -Wextra -Wno-unused-function -Wno-volatile-register-var -fomit-frame-pointer -fno-tree-loop-distribution -flto -fwhole-program -fno-exceptions -I${MUISDKDIR} -I$(LIBSDIR)/library -I$(LIBSDIR)/library/include -D__stdargs=
 CPPFLAGS= $(CCFLAGS) -fno-rtti -fcoroutines -fno-use-cxa-atexit
 ASFLAGS = -Wa,-g,--register-prefix-optional,-I$(SDKDIR),-D
 LDFLAGS = -Wl,--emit-relocs,-Ttext=0,-Map=$(OUT).map -L${LIBSDIR}

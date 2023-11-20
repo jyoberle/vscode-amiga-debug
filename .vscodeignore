@@ -30,7 +30,9 @@ template/obj/**
 !template/obj/DELETE.ME
 template/out/**
 !template/out/DELETE.ME
+template/.vscode/settings.json
+template_libs/obj/**
 !template_libs/obj/DELETE.ME
 template_libs/out/**
 !template_libs/out/DELETE.ME
-template/.vscode/settings.json
+template_libs/.vscode/settings.json

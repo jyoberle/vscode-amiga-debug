@@ -10,7 +10,9 @@
             "program": "${workspaceFolder}/${config:amiga.program}",
             "kickstart": "${config:amiga.rom-paths.A500}",
             "workbench": "${config:amiga.workbench-path}",
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
+            "bsdSocket":true
         },
         {
             "type": "amiga",
@@ -21,7 +23,9 @@
             "program": "${workspaceFolder}/${config:amiga.program}",
             "kickstart": "${config:amiga.rom-paths.A1200}",
             "workbench": "${config:amiga.workbench-path}",
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
+            "bsdSocket":true
         },
         {
             "type": "amiga",
@@ -32,7 +36,9 @@
             "program": "${workspaceFolder}/${config:amiga.program}",
             "kickstart": "${config:amiga.rom-paths.A4000}",
             "workbench": "${config:amiga.workbench-path}",
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
+            "bsdSocket":true
         }        
     ]
 }
