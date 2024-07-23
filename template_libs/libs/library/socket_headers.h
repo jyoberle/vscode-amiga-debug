@@ -2124,7 +2124,7 @@ extern int __select(int num_fds,fd_set *read_fds,fd_set *write_fds,fd_set *excep
   register struct addrinfo * __freeaddrinfo_ai __asm("a0") = (_freeaddrinfo_ai); \
   __asm volatile ("jsr %%a6@(-804:W)" \
   : \
-  : "r"(__freeaddrinfo__bn), "r"(__freeaddrinfo_ai) \
+  : "r"(__freeaddrinfo__bn) \
   : "d0", "d1", "a0", "a1", "fp0", "fp1", "cc", "memory"); \
   } \
 })

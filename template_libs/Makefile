@@ -19,8 +19,8 @@ vasm_sources := $(wildcard *.asm) $(wildcard $(addsuffix *.asm, $(subdirs)))
 vasm_objects := $(addprefix obj/, $(patsubst %.asm,%.o,$(notdir $(vasm_sources))))
 objects := $(cpp_objects) $(c_objects) $(s_objects) $(vasm_objects)
 # This is the place to declare the static libraries
-static_libs := -lc -lm -ldebug -lnet -lunix -lc -lamiga # to use Amiga paths
-#static_libs := -lm -ldebug -lnet -lunix -lc -lamiga # to use UNIX paths
+static_libs := -lc -lm -ldebug -lnet -lunix -lc -lm -lamiga # to use Amiga paths
+#static_libs := -lm -ldebug -lnet -lunix -lc -lm -lamiga # to use UNIX paths
 
 # https://stackoverflow.com/questions/4036191/sources-from-subdirectories-in-makefile/4038459
 # http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html

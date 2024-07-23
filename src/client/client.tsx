@@ -4,7 +4,7 @@ declare const setup: {
 };
 
 if(process.env.NODE_ENV === 'development') {
-	// Must use require here as import statements are only allowed to exist at the top of a file.
+	// Must use require here as import statements are only allowed at the top of a file.
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	require("preact/debug");
 
@@ -37,7 +37,6 @@ import { ISetCodeLenses, ICpuProfileRaw, IErrorMessage, IAmigaProfileSplit } fro
 import { DisplayUnit } from './display';
 import { ObjdumpView } from './objdump';
 import { SavestateView } from './savestate';
-import { GetBlits, GetCopper } from './dma';
 
 // from HTML page
 declare const OBJDUMP: string;
@@ -195,6 +194,13 @@ window.onerror = (event: Event | string, source?: string, lineno?: number, colno
 		text: 'Amiga Internal Error: ' + ((process.env.NODE_ENV === 'development') ? error.stack : error.message)
 	});
 };
+
+// disable text selection with shift+click. disturbs multi-select in objdump. https://stackoverflow.com/a/54101500
+["keyup", "keydown"].forEach((event) => {
+	window.addEventListener(event, (e: KeyboardEvent) => {
+		document.onselectstart = () => !(e.key === "Shift" && e.shiftKey);
+	});
+});
 
 // eslint-disable-next-line no-unused-expressions, @typescript-eslint/no-unused-expressions
 TryProfiler() || TryObjdump() || TrySavestate();

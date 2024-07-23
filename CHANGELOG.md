@@ -3,6 +3,24 @@
 All notable changes to the "amiga-debug" extension will be documented in this file.
 See PR links for more information.
 
+## 1.7.8
+- FIX: disassembly: fix error message when hovering over the cycle counts of an illegal instruction
+- NEW: Makefile: support dependency tracking for GNU-assembler sources (`.s`)
+
+## 1.7.7
+- FIX: Resource bitmap colors red & blue swapped [#226](https://github.com/BartmanAbyss/vscode-amiga-debug/issues/226)
+- FIX: auto-reload `.size.amigaprofile`, `.shrinklerstats` if changed on disk [#247](https://github.com/BartmanAbyss/vscode-amiga-debug/issues/247)
+- CHG: changed shrinkler output name from `a.exe.config.shrinkler` to `a.shrinkler_config.exe` so you can use `EXE2ADF` on the resulting shrinkled file
+- CHG: `Makefile`: don't strip symbol names (`-s`) in `elf2hunk` so Shrinkler can display nicer `shrinklerstats`
+- FIX: fixed/optimized `memclr`
+- NEW: ELF disassembly: move cursor with `Shift` to show accumulated cycle counts
+- FIX: flashing document when `Show Source` has been disabled in Profiler `Assembly` view
+
+## 1.7.6
+- NEW: modified template project to include `-ffunction-sections`, `-fdata-sections`, `--gc-sections` flags and changed assembly files to use unique sections so linker can better strip unused code/data
+- NEW: updated `type_traits` include
+- FIX: fix [MacOS issue](https://github.com/BartmanAbyss/vscode-amiga-debug/issues/243)
+
 ## 1.7.5
 - FIX: fixed missing `obj` and `out` directories in template project
 - FIX: `__attribute__((always_inline))` in `gcc8_c_support.h` for `-Ofast`

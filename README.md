@@ -40,26 +40,29 @@ Please note that if your Workbench disk doesn't have a Fonts directory, you'll h
 
 ![UAE_HardFile](screen_uae_hardfile.png)
 
+## Supported Amiga Models
+
+- Possible values of `"config"` in `.vscode/launch.json`:
+  - `"A500"`: KS 1.3, ECS Agnus, 0.5MB Chip + 0.5MB Slow; needs Kickstart 1.3 ROM in `"kickstart"`
+  - `"A1200"`: 68020, 2MB Chip; needs Kickstart 3.1 ROM in `"kickstart"`
+  - `"A1200-FAST"`: A1200 with 4MB fast memory
+  - `"A1200-030"`: A1200 with Blizzard 1230-IV and 32MB board memory. Requires the absolute path to the Blizzard ROM in `"cpuboard"`.
+  - `"A3000"`: A3000 (no profiler support); needs Kickstart 2.0 ROM in `"kickstart"`
+  - `"A4000"`: 68030, 68882, 2MB Chip, 8MB FAST; needs Kickstart 3.1 ROM in `"kickstart"`
+- Also, you can override the memory configuration using following fields (values are case-insensitive):
+  - `"chipmem"`: allowed values: "256k", "512k", "1m", "1.5m" or "2m"
+  - `"fastmem"`: allowed values: "0", "64k", "128k", "256k", "512k", "1m", "2m", "4m", "8m"
+  - `"slowmem"`: allowed values: "0", "512k", "1m", "1.8m"
+
 ## How-to-use clib2?
 You can do a minimal test of clib2 by setting OPTION_TEST_CLIB to 1 in `main.c` (created by following the steps in the **Quick-start** section), and then press <kbd>F5</kbd>
 
-If you want to use the clib2 libraries in your own project, your code will have to follow the skeleton of the `main.c` file:
-- Check for the Workbench startup message
-- Assign to the variable __WBenchMsg the value of the pointer to the Workbench startup message, or assign NULL if started from command line
-- Set __exit_blocked to FALSE to push exit() and similar functions to longjmp to target set by setjmp()
-- Declare and open the following libraries: Exec, intuition.library, dos.library, utility.library, graphics.library, commodities.library and icon.library
-- Assign to the variable __UtilityBase the value of UtilityBase
-- Set the target `out:` (which is used by `exit`) through the `setjmp` instruction
-- Call all the constructors, like in the `fcntCallCtor` function (the constructors must be called in a specific order)\
-At the end:
-- At the `out:` target, call the destructors, like in the `fcntCallDtor` function (the destructors must also be called in a specific order)
-- Close all libraries
-- If needed, reply to the Workbench startup message
+If you want to use the clib2 libraries in your own project, your code will have to follow the skeleton of the `main.c` file.
 
 It is also mandatory:
 - To declare the static libs in your `Makefile`:\
-a. static_libs := -lc -lm -ldebug -lnet -lunix -lc -lamiga, to use Amiga style paths, or\
-b. static_libs := -lm -ldebug -lnet -lunix -lc -lamiga, to use UNIX style paths (e.g. "/RAM/myfile" instead of "RAM:myfile")
+a. static_libs := -lc -lm -ldebug -lnet -lunix -lc -lm -lamiga, to use Amiga style paths, or\
+b. static_libs := -lm -ldebug -lnet -lunix -lc -lm -lamiga, to use UNIX style paths (e.g. "/RAM/myfile" instead of "RAM:myfile")
 - To call SetPatch in your startup-sequence
 - To increase the stack size, especially if you use `libunix` (see line below)
 - To mount the PIPE: device if you intend to use pipe functions (popen, pclose, etc.); this is done in `.vscode/launch.json` file through the instruction "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET" (which also increases the stack size)
@@ -97,6 +100,10 @@ C:assign PRINTERS: DEVS:Printers<br />
 - At last, when you define `"assigns"`, it adds your assigns at the end of the startup-sequence (see above for an example). And in case you define additional commands with `"cmdList"`, they are also added at the end of the startup-sequence.
 
 ## Change Log (fork only)
+
+### 1.7.7
+- Using clib2 library V1_214_1
+- Fixed example code to distinguish correctly between start from CLI or Workbench 
 
 ### 1.7.5
 - The clib2 library is included (from https://github.com/jyoberle/clib2) as a set of libraries in static_libs
