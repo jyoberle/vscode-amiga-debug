@@ -1,0 +1,2 @@
+#define OPTION_USE_CLIB2 0
+#define OPTION_AMIGA_OS32 0

@@ -43,6 +43,10 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	assigns?: string; // list of assign with their directories, e.g. MUI: dh2:MUI,LIBS: dh2:LIBS DH2:MUI/Libs
 	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available	
 	cmdList?: string; // list of commands (separated by commas) to be added at the end of the startup-sequence, e.g. df0:System/rexxmast
+	fullscreen?: boolean; // to open in fullscreen mode // DEBUG_JOB : a implementer
+	width?: string; // width of the screen
+	height?: string; // height of the screen
+	startup?: string; // name of the startup-sequence
 }
 
 class ExtendedVariable {
@@ -270,6 +274,12 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			config.set('win32.start_not_captured', 'yes');
 			config.set('win32.nonotificationicon', 'yes'); // tray icons remain after killing WinUAE, so just disable altogether
 			config.set('boot_rom_uae', 'min'); // so we can control warp mode, KPrintF, debug overlay from within amiga executables
+			
+			// In case we won't be using RTG
+			config.delete('gfxcard_size');
+			config.delete('gfxcard_type');
+			config.delete('cpu_type');
+			config.delete('cpu_24bit_addressing');
 
 			// machine configs
 			switch(machine) {
@@ -294,6 +304,13 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			case 'a4000':
 				config.set('quickstart', 'a4000,0'); // 68030, 68882, 2MB Chip 8MB FAST
 				//config.set('quickstart', 'a4000,1'); // 68040, 2MB Chip 8MB FAST
+				break;
+			case 'a1200-rtg':
+				config.set('quickstart', 'a1200,1'); // 68020, 2MB Chip 4MB FAST
+				config.set('gfxcard_size','8'); // 8MB VRAM
+				config.set('gfxcard_type','ZorroIII'); // Zorro III
+				config.set('cpu_type','68020'); // 68020 32 bits
+				config.set('cpu_24bit_addressing','false'); // 32 bits addressing
 				break;
 			}
 
@@ -418,6 +435,31 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			} else {
 				config.set("bsdsocket_emu",args.bsdSocket?"true":"false");
 			}
+
+			if(args.width === undefined || args.height === undefined) {
+				config.delete("gfx_width");
+				config.delete("gfx_height");
+				config.delete("gfx_width_windowed");
+				config.delete("gfx_height_windowed");
+				config.delete("gfx_width_fullscreen");
+				config.delete("gfx_height_fullscreen");
+			} else {
+				// Order is important
+				config.set("gfx_width",args.width);
+				config.set("gfx_height",args.height);
+				config.set("gfx_width_windowed",args.width);
+				config.set("gfx_height_windowed",args.height);
+				config.set("gfx_width_fullscreen",args.width);
+				config.set("gfx_height_fullscreen",args.height);				
+			}
+			
+			if(args.fullscreen === undefined) {
+				config.delete("gfx_fullscreen_amiga");
+				config.delete("gfx_fullscreen_picasso");
+			} else {
+				config.set("gfx_fullscreen_amiga",args.fullscreen?"true":"false");
+				config.set("gfx_fullscreen_picasso",args.fullscreen?"true":"false");
+			}
 			
 			if(args.workbench === undefined) {
 				config.delete("hardfile2");
@@ -435,13 +477,15 @@ export class AmigaDebugSession extends LoggingDebugSession {
 					config.set("floppy_speed","0");
 					config.delete("hardfile2");
 					config.delete("uaehf2");
+					config.delete("  filesystem2");
 				} else {
+					config.delete("floppy0");
+					config.delete("floppy_speed");
+						
 					if(new RegExp(/.hdf,\d+,\d+,\d+,\d+$/i).test(args.workbench)) {
 						// It is a .vhd hard disk
 						config.set("hardfile2","rw,DH2:" + args.workbench + ",-128,,uae1");
 						config.set("uaehf2","hdf,rw,DH2:" + args.workbench + ",-128,,uae1");
-						config.delete("floppy0");
-						config.delete("floppy_speed");
 					} else {
 						// It is a directory
 						config.set("  filesystem2","rw,DH2:DH2:" + args.workbench + ",-128");
@@ -471,6 +515,16 @@ export class AmigaDebugSession extends LoggingDebugSession {
 			case 'a1200-030':
 				config.set('amiga_model', 'A1200/1230'); // 68030, 2MB Chip 32MB FAST, Blizzard 1230-IV
 				config.set('fast_memory', '32768');
+				break;
+			case 'a1200-rtg':
+				config.set('amiga_model', 'a1200'); // 68020, 2MB Chip 4MB FAST
+				config.set('fast_memory', '4096');
+				config.set('uae_gfxcard_size','8'); // 8MB VRAM
+				config.set('zorro_iii_memory','8192'); // 8MB VRAM
+				config.set('uae_gfxcard_type','ZorroIII'); // Zorro III
+				config.set('uae_cpu_type','68020'); // 68020 32 bits
+				config.set('uae_cpu_24bit_addressing','0'); // 32 bits addressing
+				config.set('uae_rtg_modes','0x212'); // 8bit + 16bit PC + 32bit BGRA
 				break;
 			default:
 				config.set('amiga_model', machine || "A500");
@@ -564,19 +618,22 @@ export class AmigaDebugSession extends LoggingDebugSession {
 				break;
 			}
 
-			if(args.bsdSocket === undefined) {
-				config.delete("bsdsocket_library");
-			} else {
+			if(args.bsdSocket !== undefined) {
 				config.set("bsdsocket_library",args.bsdSocket?"1":"0");
 			}
 			
-			if(args.workbench === undefined) {
-				config.delete("floppy_drive_0");
-				config.delete("floppy_drive_speed");
-				config.delete("hard_drive_2");
-				config.delete("hard_drive_0_priority");
-				config.delete("hard_drive_1_priority");
-			} else {
+			if(args.width !== undefined && args.height !== undefined) {
+				config.set("window_width",args.width);
+				config.set("window_height",args.height);
+				config.set("fullscreen_width",args.width);
+				config.set("fullscreen_height",args.height);				
+			}
+			
+			if(args.fullscreen !== undefined) {
+				config.set("fullscreen",args.fullscreen?"1":"0");
+			}
+			
+			if(args.workbench !== undefined) {
 				if(args.workbench.toLowerCase().endsWith(".adf")) {
 					config.set("floppy_drive_0",args.workbench);
 					config.set("floppy_drive_speed","0");
@@ -638,12 +695,42 @@ export class AmigaDebugSession extends LoggingDebugSession {
 		const ssPath = path.join(dh0Path, "s/startup-sequence");
 		try {
 			let startupSequence = '';
+			let startupFileFound = false;
 			
-			if(args.workbench !== undefined) {
-				if(args.workbench.toLowerCase().endsWith(".adf")) {
-					startupSequence += `DF0:C/assign C: DF0:C\nC:assign SYS: DF0:\nC:assign S: DF0:S\nC:assign LIBS: DF0:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DF0:Devs\nC:assign FONTS: DF0:Fonts\nC:assign L: DF0:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DF0:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
-				} else {
-					startupSequence += `DH2:C/assign C: DH2:C\nC:assign SYS: DH2:\nC:assign S: DH2:S\nC:assign LIBS: DH2:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DH2:Devs\nC:assign FONTS: DH2:Fonts\nC:assign L: DH2:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DH2:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+			if(args.startup !== undefined) {
+				// We check for the existence of the startup-sequence.txt file
+				const workspaceFolders = vscode.workspace.workspaceFolders;
+					
+				if (workspaceFolders) {
+					const rootUri = workspaceFolders[0].uri;
+					const fileUri = vscode.Uri.joinPath(rootUri, '.vscode', args.startup);
+					
+					try {
+						const fileStat = await vscode.workspace.fs.stat(fileUri);
+								
+						// We verify that it is a file and not a directory
+						if (fileStat.type === vscode.FileType.File) {
+							// We read it and build the startupSequence based on it
+							const readData = await vscode.workspace.fs.readFile(fileUri);
+							const content = Buffer.from(readData).toString('utf8');
+							const lfContent = content.replace(/\r\n/g,'\n'); // convert all CR+LF to LF only
+							startupSequence += lfContent + '\n';
+							startupFileFound = true;
+						}
+					} catch (error) {
+						// We end up here if the startup-sequence file does not exist
+					}
+				}
+			}
+			
+			if(!startupFileFound)
+			{
+				if(args.workbench !== undefined) {
+					if(args.workbench.toLowerCase().endsWith(".adf")) {
+						startupSequence += `DF0:C/assign C: DF0:C\nC:assign SYS: DF0:\nC:assign S: DF0:S\nC:assign LIBS: DF0:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DF0:Devs\nC:assign FONTS: DF0:Fonts\nC:assign L: DF0:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DF0:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+					} else {
+						startupSequence += `DH2:C/assign C: DH2:C\nC:assign SYS: DH2:\nC:assign S: DH2:S\nC:assign LIBS: DH2:LIBS DH0:MUI/Libs DH0:Libs\nC:assign DEVS: DH2:Devs\nC:assign FONTS: DH2:Fonts\nC:assign L: DH2:L\nC:MakeDir RAM:T RAM:Clipboards RAM:ENV RAM:ENV/Sys\nC:assign T: RAM:T\nC:assign CLIPS: RAM:Clipboards\nC:assign ENV: RAM:ENV\nC:assign LOCALE: DH2:Locale dh0:MUI/Locale\nC:assign PRINTERS: DEVS:Printers\nC:assign MUI: dh0:MUI\n`;
+					}
 				}
 			}
 			

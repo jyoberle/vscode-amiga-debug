@@ -11,8 +11,8 @@
             "kickstart": "${config:amiga.rom-paths.A500}",
             "workbench": "${config:amiga.workbench-path}",
             "internalConsoleOptions": "openOnSessionStart",
-            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
-            "bsdSocket":true
+            "bsdSocket":true,
+            "startup":"startup-sequence-os3.1-floppy.txt"
         },
         {
             "type": "amiga",
@@ -24,8 +24,8 @@
             "kickstart": "${config:amiga.rom-paths.A1200}",
             "workbench": "${config:amiga.workbench-path}",
             "internalConsoleOptions": "openOnSessionStart",
-            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
-            "bsdSocket":true
+            "bsdSocket":true,
+            "startup":"startup-sequence-os3.2-hdd.txt"
         },
         {
             "type": "amiga",
@@ -37,8 +37,8 @@
             "kickstart": "${config:amiga.rom-paths.A4000}",
             "workbench": "${config:amiga.workbench-path}",
             "internalConsoleOptions": "openOnSessionStart",
-            "cmdList":"C:Mount PIPE:,C:stack 16384,C:SetPatch QUIET",
-            "bsdSocket":true
+            "bsdSocket":true,
+            "startup":"startup-sequence-os3.1-floppy.txt"
         }        
     ]
 }

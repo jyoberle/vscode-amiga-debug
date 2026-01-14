@@ -6,7 +6,7 @@
 	"repository": {
 		"url": "https://github.com/jyoberle/vscode-amiga-debug"
 	},
-	"version": "1.7.7",
+	"version": "1.7.8",
 	"license": "GPL-3.0-or-later",
 	"engines": {
 		"vscode": "^1.46.0"
@@ -304,7 +304,8 @@
 									"A1200-FAST",
 									"A1200-030",
 									"A3000",
-									"A4000"
+									"A4000",
+									"A1200-RTG"
 								]
 							},
 							"program": {
@@ -412,7 +413,27 @@
 								"type": "string",
 								"description": "List of additional commands (separated by commas) to be added at the end of the startup-sequence, e.g. df0:System/rexxmast.",
 								"default": ""
-							}						
+							},
+							"fullscreen": {
+								"type": "boolean",
+								"description": "To open in fullscreen mode",
+								"default": false
+							},
+							"width": {
+								"type": "string",
+								"description": "Width of the screen",
+								"default": ""
+							},
+							"height": {
+								"type": "string",
+								"description": "Height of the screen",
+								"default": ""
+							},
+							"startup": {
+								"type": "string",
+								"description": "Name of startup-sequence",
+								"default": ""
+							}
 						}
 					}
 				},

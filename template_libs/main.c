@@ -1,14 +1,15 @@
+#include "l_option.h"
 #include <proto/exec.h>
+#define NO_INLINE_STDARG
 #include <proto/intuition.h>
+#undef NO_INLINE_STDARG
+#include <proto/window.h>
 #define NO_INLINE_STDARG
 #include <proto/muimaster.h>
 #undef NO_INLINE_STDARG
 #include <proto/utility.h>
 #include <proto/icon.h>
 #include <clib/alib_protos.h>
-#include "g_misc.h"
-
-#define OPTION_USE_CLIB2 0
 
 #if OPTION_USE_CLIB2
 #include <stdlib_headers.h>
@@ -16,15 +17,33 @@
 
 #define MUI_LIB_VERSION 19L
 
+extern int main_bevels(void);
+extern int main_buttons( void );
+extern int main_checkbox(void);
+extern int main_requester( void );
+
 // We need to declare the libraries as "externally_visible" since we are using the option -fwhole-program in the Makefile
 __attribute__((externally_visible)) struct ExecBase *SysBase;
 __attribute__((externally_visible)) struct IntuitionBase *IntuitionBase = NULL;
 __attribute__((externally_visible)) struct DosLibrary *DOSBase = NULL;
+#if OPTION_AMIGA_OS32
+__attribute__((externally_visible)) struct Library *UtilityBase = NULL;
+#else
 __attribute__((externally_visible)) struct UtilityBase *UtilityBase = NULL;
+#endif
 __attribute__((externally_visible)) struct GfxBase *GfxBase = NULL;
 __attribute__((externally_visible)) struct Library *CxBase = NULL;
 __attribute__((externally_visible)) struct Library *IconBase = NULL;
 struct Library *MUIMasterBase = NULL;
+
+#if OPTION_AMIGA_OS32
+__attribute__((externally_visible)) struct Library *LabelBase = NULL;
+__attribute__((externally_visible)) struct Library *LayoutBase = NULL;
+__attribute__((externally_visible)) struct Library *WindowBase = NULL;
+__attribute__((externally_visible)) struct Library *ButtonBase = NULL;
+__attribute__((externally_visible)) struct Library *CheckBoxBase = NULL;
+__attribute__((externally_visible)) struct Library *RequesterBase = NULL;
+#endif
 
 #if OPTION_USE_CLIB2
 // Declare all clib2 constructors and destructors
@@ -186,6 +205,26 @@ void MUIShowHide(void)
 // Does the clean up of all ressources
 void cleanUP(void)
 {
+#if OPTION_AMIGA_OS32
+	if(LabelBase != NULL)
+		CloseLibrary((struct Library *)LabelBase);
+
+	if(LayoutBase != NULL)
+		CloseLibrary((struct Library *)LayoutBase);
+
+	if(WindowBase != NULL)
+		CloseLibrary((struct Library *)WindowBase);
+
+	if(ButtonBase != NULL)
+		CloseLibrary((struct Library *)ButtonBase);
+
+	if(CheckBoxBase != NULL)
+		CloseLibrary((struct Library *)CheckBoxBase);
+
+	if(RequesterBase != NULL)
+		CloseLibrary((struct Library *)RequesterBase);
+#endif
+
 	if(IntuitionBase != NULL)
 		CloseLibrary((struct Library *)IntuitionBase);
 
@@ -206,107 +245,6 @@ void cleanUP(void)
 
 	if(MUIMasterBase != NULL)
 		CloseLibrary(MUIMasterBase);
-}
-
-// We need to redefine some MUI functions because gcc, due to optimisations, is not always pushing all tags on the stack
-Object *MUI_NewObject(CONST_STRPTR cl, Tag tags, ...)
-{
-	Object *ret = NULL;
-	va_list param;
-	struct TagItem *tagItem;
-
-	va_start(param,tags);
-
-	if((tagItem = CopyTagsToMem(tags,param))) 
-	{
-		ret = MUI_NewObjectA(cl,(struct TagItem *)tagItem);
-		FreeTagMem(tagItem);
-	}
-
-	va_end(param);
-
-	return(ret);
-}
-
-Object *MUI_MakeObject(LONG type,...)
-{
-	Object *ret = NULL;
-	va_list param;
-	Tag firstTag;
-	struct TagItem *tagItem;
-
-	va_start(param,type);
-	firstTag = (Tag)va_arg(param,Tag);
-
-	if((tagItem = CopyTagsToMem(firstTag,param))) 
-	{
-		ret = MUI_MakeObjectA(type,(ULONG *)tagItem);
-		FreeTagMem(tagItem);
-	}
-
-	va_end(param);
-
-	return(ret);
-}
-
-LONG MUI_Request(APTR app,APTR win,ULONG flags,CONST_STRPTR title,CONST_STRPTR gadgets,CONST_STRPTR format,...)
-{
-	LONG ret = 0L;
-
-	va_list param;
-	Tag firstTag;
-	struct TagItem *tagItem;
-
-	va_start(param,format);
-	firstTag = (Tag)va_arg(param,Tag);
-
-	if((tagItem = CopyTagsToMem(firstTag,param))) 
-	{
-		ret = MUI_RequestA(app,win,flags,title,gadgets,format,tagItem);
-		FreeTagMem(tagItem);
-	}
-
-	va_end(param);
-
-	return(ret);
-}
-
-APTR MUI_AllocAslRequestTags(unsigned long reqType, Tag Tag1, ...)
-{
-	APTR ret = NULL;
-	va_list param;
-	struct TagItem *tagItem;
-
-	va_start(param,Tag1);
-
-	if((tagItem = CopyTagsToMem(Tag1,param))) 
-	{
-  		ret = MUI_AllocAslRequest(reqType,(struct TagItem *)tagItem);
-		FreeTagMem(tagItem);
-	}
-
-	va_end(param);
-  	
-	return(ret);
-}
-
-BOOL MUI_AslRequestTags(APTR requester, Tag Tag1, ...)
-{
-	BOOL ret =  FALSE;
-	va_list param;
-	struct TagItem *tagItem;
-
-  	va_start(param,Tag1);
-
-	if((tagItem = CopyTagsToMem(Tag1,param))) 
-	{
-		ret = MUI_AslRequest(requester,(struct TagItem *)tagItem);
-		FreeTagMem(tagItem);
-	}
-
-	va_end(param);
-
-	return(ret);
 }
 
 // Entry of our code
@@ -333,16 +271,29 @@ int main(int argc, char **argv)
 	// We open the libraries (required since we are linking with alib; please see https://github.com/jyoberle/alib for details)
 	IntuitionBase = (struct IntuitionBase *)OpenLibrary((CONST_STRPTR)"intuition.library",0L);
 	DOSBase = (struct DosLibrary *)OpenLibrary((CONST_STRPTR)"dos.library",0L);
+#if OPTION_AMIGA_OS32
+	UtilityBase = (struct Library *)OpenLibrary((CONST_STRPTR)"utility.library",0L);
+#else
 	UtilityBase = (struct UtilityBase *)OpenLibrary((CONST_STRPTR)"utility.library",0L);
+#endif
 	GfxBase = (struct GfxBase *)OpenLibrary("graphics.library",0);
 	CxBase = OpenLibrary("commodities.library",0);
-	IconBase = OpenLibrary("icon.library",0);
+	//IconBase = OpenLibrary("icon.library",0);
 	MUIMasterBase = OpenLibrary("muimaster.library",MUI_LIB_VERSION);
 
-	if(IntuitionBase && DOSBase && UtilityBase && GfxBase && CxBase && IconBase && MUIMasterBase)
+#if OPTION_AMIGA_OS32
+	LabelBase = (struct Library *)OpenLibrary("images/label.image",0L);
+    LayoutBase = (struct Library *)OpenLibrary("gadgets/layout.gadget",0L);
+    WindowBase = (struct Library *)OpenLibrary("window.class",0L);
+	ButtonBase = (struct Library *)OpenLibrary("gadgets/button.gadget",0L);
+	CheckBoxBase = (struct Library *)OpenLibrary("gadgets/checkbox.gadget",0L);
+	RequesterBase = (struct Library *)OpenLibrary("requester.class",0L);
+#endif
+
+	if(IntuitionBase && DOSBase && UtilityBase && GfxBase && CxBase /*&& IconBase*/ && MUIMasterBase)
 	{
 #if OPTION_USE_CLIB2
-		__UtilityBase = UtilityBase; // we need to add this because of macro DECLARE_UTILITYBASE()
+		__UtilityBase = (struct Library *)UtilityBase; // we need to add this because of macro DECLARE_UTILITYBASE()
 
 		if(setjmp(__exit_jmp_buf) != 0)
 			goto out; // target for exit
@@ -353,8 +304,16 @@ int main(int argc, char **argv)
 		// If all libs are available, we open the MUI window
 		MUIShowHide();
 
+#if OPTION_AMIGA_OS32
+		// Then we run some examples of code taken from Amiga OS 3.2 NDK
+		main_bevels();
+		main_buttons();
+		main_checkbox();
+		main_requester();
+#endif
+
 #if OPTION_USE_CLIB2
-		printf("This is an example of use of clib2\n");
+		printf("In the beginning God created the heaven and the earth.\n");
 
 		out:
 		fcntCallDtor(); // call the destructors

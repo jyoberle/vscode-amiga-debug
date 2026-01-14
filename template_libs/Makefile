@@ -31,17 +31,23 @@ CC = m68k-amiga-elf-gcc
 VASM = vasmm68k_mot
 
 ifdef WINDOWS
+# This is the path to the Amiga OS 3.1 SDK
 	SDKDIR = $(abspath $(dir $(shell where $(CC)))..\m68k-amiga-elf\sys-include)
+# And this is the path to the Amiga OS 3.2 NDK
+#	SDKDIR = $(abspath $(dir $(shell where $(CC)))..\m68k-amiga-elf\ndk-include)
 	MUISDKDIR = $(abspath $(dir $(shell where $(CC)))..\m68k-amiga-elf\sys-include\SDK\MUI\C\include)
 else
+# This is the path to the Amiga OS 3.1 SDK
 	SDKDIR = $(abspath $(dir $(shell which $(CC)))../m68k-amiga-elf/sys-include)
+# And this is the path to the Amiga OS 3.2 NDK
+#	SDKDIR = $(abspath $(dir $(shell which $(CC)))../m68k-amiga-elf/ndk-include)
 	MUISDKDIR = $(abspath $(dir $(shell which $(CC)))../m68k-amiga-elf/sys-include/SDK/MUI/C/include)
 endif
 
 # The directory where the static libraries are located
 LIBSDIR = $(abspath libs)
 
-CCFLAGS = -g -MP -MMD -m68000 -Ofast -nostdlib -Wextra -Wno-unused-function -Wno-volatile-register-var -fomit-frame-pointer -fno-tree-loop-distribution -flto -fwhole-program -fno-exceptions -I${MUISDKDIR} -I$(LIBSDIR)/library -I$(LIBSDIR)/library/include -D__stdargs=
+CCFLAGS = -g -MP -MMD -m68000 -Ofast -nostdlib -Wextra -Wno-unused-function -Wno-volatile-register-var -fomit-frame-pointer -fno-tree-loop-distribution -flto -fwhole-program -fno-exceptions -I${SDKDIR} -I${MUISDKDIR} -I$(LIBSDIR)/library -I$(LIBSDIR)/library/include -D__stdargs=
 CPPFLAGS= $(CCFLAGS) -fno-rtti -fcoroutines -fno-use-cxa-atexit
 ASFLAGS = -Wa,-g,--register-prefix-optional,-I$(SDKDIR),-D
 LDFLAGS = -Wl,--emit-relocs,-Ttext=0,-Map=$(OUT).map -L${LIBSDIR}
