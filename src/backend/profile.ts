@@ -87,9 +87,10 @@ interface Unwind {
 	ra: number;
 }
 
-export function Disassemble(objdumpPath: string, elfPath: string) {
+export function  Disassemble(objdumpPath: string, elfPath: string) {
 	const objdump = childProcess.spawnSync(objdumpPath, [
 		'--disassemble',
+		'--architecture=m68k:68040',
 		'--demangle',
 		'-l', // include lines
 		'-w', // wide output

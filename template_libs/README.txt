@@ -77,8 +77,8 @@ Please be also aware of the current limitations of clib2:
 
 You'll find some examples on how to use the clib2 functions in https://github.com/jyoberle/clib2.
 
-5.Using RTG
-===========
+5. Using RTG
+============
 
 If your future programs require the use of RTG (retargetable graphics) mode, it is possible to configure the extension to start WinUAE/FS-UAE in this mode. Again, there are a few steps to achieve this goal:
 a) First, you'll have to configure your OS 3.1 or 3.2 for RTG. All steps are detailed in this video: https://www.youtube.com/watch?v=2ENWAMajvjQ. 
@@ -93,7 +93,19 @@ d) Optionally, you can also specify that you want to start in fullscreen mode:
 
 After this setup, compilation is started as usual by pressing F5.
 
-6. A few words to conclude
+6. Compiling with GCC 13.2
+==========================
+
+GCC 15.2 (and above) is more restrictive regarding C coding rules (your old code may break). For this reason, the extension allows you to still use version 13.2. To force your project to use GCC 13.2:
+a) Edit the Visual Studio Code settings (press Ctrl + ,), navigate to Extensions -> Amiga C/C++ Compile, Debug & Profile, and set "Amiga: Gcc Version" to "13.2",
+b) Or create a .vscode/settings.json file with:
+{
+  "amiga.gccVersion": "13.2"
+}
+
+Set the "Amiga: Gcc Version" setting or "amiga.gccVersion" property to an empty string ("") if you want to switch back to GCC 15.2 (do not specify "15.2"!). Don't forget to clean the project (press Ctrl+P and type "task clean") when switching between GCC versions.
+
+7. A few words to conclude
 ==========================
 
 At last, to take fully advantage of this extension, if not already done, you can read the guidelines in https://github.com/jyoberle/vscode-amiga-debug.

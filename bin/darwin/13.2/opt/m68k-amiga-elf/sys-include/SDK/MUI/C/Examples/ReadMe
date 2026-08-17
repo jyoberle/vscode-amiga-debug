@@ -1,0 +1,15 @@
+This directory contains the source codes for the supplied
+demo programs. It should compile under SAS and DICE.
+
+Furthermore, the complete source code for the public
+screen manager PSI is included for eduational purpose.
+Sorry to DICE users, PSI only compiles under SAS.
+
+Don't miss the little brush2c goodie which can be used
+to include ILBM brushes in MUI programs.
+
+Note: You will need at least 2.0 (v37.175) include files
+      and linker libraries!
+
+Much success with your own MUI applications!
+Stefan Stuntz

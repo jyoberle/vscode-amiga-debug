@@ -3,6 +3,27 @@
 All notable changes to the "amiga-debug" extension will be documented in this file.
 See PR links for more information.
 
+## 1.8.3
+- NEW: update gcc to 15.2.0
+- FIX: 1.8.2 used MacOS ARM by mistake, now back on MacOS Intel
+
+## 1.8.2
+- NEW: copper visualizer in "Screen" tab
+- CHG: "Copper" now shows position of instructions when they are executed (was: when instructions are fetched)
+- NEW: update gcc to 15.1.0 (Linux, MacOS)
+
+## 1.8.1
+- FIX: fix `GetVBR` for 68040 (thanks to Ferris and Sniper)
+- FIX: `Disassemble ELF File` now supports 68040 instructions
+
+## 1.8.0
+- NEW: update gcc to 15.1.0
+- NEW: elf2hunk support R_68K_PC32 handling [PR#3](https://github.com/BartmanAbyss/elf2hunk/pull/3) by [Jake Taylor](https://github.com/yupferris)
+- NEW: template: `EMBED`, `EMBED_CHIP` replace `INCBIN`, `INCBIN_CHIP`, use those for better dependency tracking
+
+## 1.7.9
+- NEW: update gcc to 14.2.0, binutils, GNU gdb (GDB) 17.0.50.20250202-git
+
 ## 1.7.8
 - FIX: disassembly: fix error message when hovering over the cycle counts of an illegal instruction
 - NEW: Makefile: support dependency tracking for GNU-assembler sources (`.s`)

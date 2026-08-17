@@ -127,7 +127,7 @@ class AmigaDebugExtension {
 
 	constructor(private context: vscode.ExtensionContext) {
 		this.extensionPath = context.extensionPath;
-		this.binPath = path.join(this.extensionPath, "bin", process.platform);
+		this.binPath = path.join(this.extensionPath, "bin", process.platform, vscode.workspace.getConfiguration('amiga').get<string>('gccVersion', '') === '13.2' ? '13.2' : '');
 		this.registerProvider = new RegisterTreeProvider();
 		this.customRegisterProvider = new CustomRegisterTreeProvider();
 		this.disassembledMemoryProvider = new DisassembledMemoryProvider();
@@ -174,7 +174,7 @@ class AmigaDebugExtension {
 			vscode.commands.registerCommand('amiga.profileSize', (uri: vscode.Uri) => this.profileSize(uri)),
 			vscode.commands.registerCommand('amiga.shrinkler', (uri: vscode.Uri) => this.shrinkler(uri)),
 			vscode.commands.registerCommand('amiga.disassembleElf', (uri: vscode.Uri) => this.disassembleElf(uri)),
-			vscode.commands.registerCommand('amiga.bin-path', () => path.join(this.extensionPath, 'bin', process.platform)),
+			vscode.commands.registerCommand('amiga.bin-path', () => path.join(this.extensionPath, "bin", process.platform, vscode.workspace.getConfiguration('amiga').get<string>('gccVersion', '') === '13.2' ? '13.2' : '')),
 			vscode.commands.registerCommand('amiga.initProject', this.initProject.bind(this)),
 			vscode.commands.registerCommand('amiga.initProjectWithLibs', this.initProjectWithLibs.bind(this)),
 			vscode.commands.registerCommand('amiga.terminal', this.openTerminal.bind(this)),
@@ -740,7 +740,7 @@ class AmigaDebugExtension {
 	}
 
 	private async setPermissions() {
-		const version = "13.2.0";
+		const version = "15.2.0";
 		const exes = [
 			"elf2hunk",
 			"exe2adf",

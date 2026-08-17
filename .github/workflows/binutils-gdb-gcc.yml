@@ -5,8 +5,8 @@ on:
     paths:
       - "gcc-barto.patch"
       - "ci/**"
-  schedule:
-    - cron: "0 0 * * *"
+#  schedule:
+#    - cron: "0 0 * * *"
   workflow_dispatch:
 
 # make sure to run ci/binutils-gdb/install.sh after ci/gcc/build.sh
@@ -15,10 +15,10 @@ on:
 
 jobs:
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
-      CC:   gcc-9
-      CXX:  g++-9
+      CC: gcc-10
+      CXX: g++-10
     steps:
       - uses: actions/checkout@v3
       - run: ci/install-packages-linux.sh
@@ -35,13 +35,13 @@ jobs:
       - run: ci/gcc/install.sh
       - run: ci/clean-up.sh
       - run: ci/archive-linux.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: binutils-gdb-gcc-linux
           path: binutils-gdb-gcc-linux.tar
 
   macos:
-    runs-on: macos-11
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v3
       - run: ci/install-packages-macos.sh
@@ -59,7 +59,7 @@ jobs:
       - run: ci/clean-up.sh
       - run: ci/bundle-macos.sh
       - run: ci/archive-macos.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: binutils-gdb-gcc-macos
           path: binutils-gdb-gcc-macos.tar

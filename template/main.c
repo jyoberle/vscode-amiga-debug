@@ -27,14 +27,16 @@ static APTR SystemIrq;
  
 struct View *ActiView;
 
+static __attribute__((interrupt)) void SupervisorGetVBR() {
+	__asm__ volatile(".short 0x4e7a, 0x0801"); // movec.l vbr, d0
+}
+
 static APTR GetVBR(void) {
 	APTR vbr = 0;
-	UWORD getvbr[] = { 0x4e7a, 0x0801, 0x4e73 }; // MOVEC.L VBR,D0 RTE
-
 	if (SysBase->AttnFlags & AFF_68010) 
-		vbr = (APTR)Supervisor((ULONG (*)())getvbr);
+		vbr = (APTR)Supervisor((ULONG (*)())SupervisorGetVBR);
 
-	return vbr;
+	return vbr; 
 }
 
 void SetInterruptHandler(APTR interrupt) {
@@ -147,11 +149,18 @@ void FreeSystem() {
 __attribute__((always_inline)) inline short MouseLeft(){return !((*(volatile UBYTE*)0xbfe001)&64);}	
 __attribute__((always_inline)) inline short MouseRight(){return !((*(volatile UWORD*)0xdff016)&(1<<10));}
 
-// DEMO - INCBIN
+// DEMO - EMBED
 volatile short frameCounter = 0;
-INCBIN(colors, "image.pal")
-INCBIN_CHIP(image, "image.bpl") // load image into chipmem so we can use it without copying
-INCBIN_CHIP(bob, "bob.bpl")
+
+EMBED colors[] = { 
+	#embed "image.pal"
+};
+EMBED_CHIP image[] = { // load image into chipmem so we can use it without copying
+	#embed "image.bpl" 
+};
+EMBED_CHIP bob[] = { 
+	#embed "bob.bpl" 
+};
 
 // put copperlist into chip mem so we can use it without copying
 const UWORD copper2[] __attribute__((section (".MEMF_CHIP"))) = {
@@ -191,8 +200,13 @@ void* doynaxdepack(const void* input, void* output) { // returns end of output d
 	// Demo - Module Player - ThePlayer 6.1a: https://www.pouet.net/prod.php?which=19922
 	// The Player® 6.1A: Copyright © 1992-95 Jarno Paananen
 	// P61.testmod - Module by Skylord/Sector 7 
-	INCBIN(player, "player610.6.no_cia.bin")
-	INCBIN_CHIP(module, "testmod.p61")
+	// load image into chipmem so we can use it without copying
+	EMBED player[] = { 
+		#embed "player610.6.no_cia.bin" 
+	};
+	EMBED_CHIP module[] = { 
+		#embed "testmod.p61" 
+	};
 
 	int p61Init(const void* module) { // returns 0 if success, non-zero otherwise
 		register volatile const void* _a0 ASM("a0") = module;

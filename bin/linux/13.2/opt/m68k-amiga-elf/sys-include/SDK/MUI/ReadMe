@@ -1,0 +1,31 @@
+                        MUI - MagicUserInterface
+
+                              Version 3.9
+
+                (c) Copyright 1992-2005 by Stefan Stuntz
+
+                         - Developer Archive -
+
+
+
+This  archive  contains  all  developer  material  available for the MUI
+system.  You  will  find  detailed  programmer  documentation  in Ascii,
+AmigaGuide(tm)  or  DVI  format, per class autodoc files, interfaces for
+different  languages and the complete documented source code for all the
+demonstration programs from the user archive.
+
+Starting with release 3.5, the Oberon, Modula and Amiga-E interfaces are
+no longer included in the developer archive. Please find them separately
+on Aminet in drawer dev/mui.
+
+Please read the text files in the Docs drawer of this distribution. They
+will  hopefully  explain  all important topics about using MUI with your
+own applications.
+
+All  the  files  coming  with  the  MUI  developer  archive are provided
+"AS-IS";  no  warranties  are  made.  All  use  is  at your own risk. No
+liability or responsibility is assumed.
+
+The  complete  and  unmodified MUI developer archive, as provided by the
+author,  may  be  freely redistributed via any means which preserves its
+copyrights. The archive may not be sold for profit.

@@ -1,0 +1,107 @@
+==id $Id: muimaster_lib.sfd,v 1.2 2005/12/17 00:44:31 jens.langner-light-speed.de Exp $
+==base _MUIMasterBase
+==basetype struct Library *
+==libname muimaster.library
+==bias 30
+==public
+==include <exec/types.h>
+==include <intuition/classes.h>
+==include <utility/tagitem.h>
+==include <libraries/mui.h>
+Object * MUI_NewObjectA(CONST_STRPTR cl, struct TagItem * tags) (a0,a1)
+==varargs
+Object * MUI_NewObject(CONST_STRPTR cl, Tag tags, ...) (a0,a1)
+VOID MUI_DisposeObject(Object * obj) (a0)
+LONG MUI_RequestA(APTR app, APTR win, ULONG flags, CONST_STRPTR title, CONST_STRPTR gadgets,
+	CONST_STRPTR format, APTR params) (d0,d1,d2,a0,a1,a2,a3)
+==varargs
+LONG MUI_Request(APTR app, APTR win, ULONG flags, CONST_STRPTR title, CONST_STRPTR gadgets, CONST_STRPTR format, ULONG tag1, ...) (d0,d1,d2,a0,a1,a2,a3)
+APTR MUI_AllocAslRequest(unsigned long type, struct TagItem * tags) (d0,a0)
+==varargs
+APTR MUI_AllocAslRequestTags(unsigned long type, Tag tags, ...) (d0,a0)
+BOOL MUI_AslRequest(APTR req, struct TagItem * tags) (a0,a1)
+==varargs
+BOOL MUI_AslRequestTags(APTR req, Tag tags, ...) (a0,a1)
+VOID MUI_FreeAslRequest(APTR req) (a0)
+LONG MUI_Error() ()
+LONG MUI_SetError(LONG errnum) (d0)
+struct IClass * MUI_GetClass(CONST_STRPTR name) (a0)
+VOID MUI_FreeClass(struct IClass * cl) (a0)
+VOID MUI_RequestIDCMP(Object * obj, ULONG flags) (a0,d0)
+VOID MUI_RejectIDCMP(Object * obj, ULONG flags) (a0,d0)
+VOID MUI_Redraw(Object * obj, ULONG flags) (a0,d0)
+struct MUI_CustomClass * MUI_CreateCustomClass(struct Library * base, CONST_STRPTR supername,
+	struct MUI_CustomClass * supermcc, int datasize, APTR dispatcher) (a0,a1,a2,d0,a3)
+BOOL MUI_DeleteCustomClass(struct MUI_CustomClass * mcc) (a0)
+Object * MUI_MakeObjectA(LONG type, ULONG * params) (d0,a0)
+==varargs
+Object * MUI_MakeObject(LONG type, ULONG tag1, ...) (d0,a0)
+BOOL MUI_Layout(Object * obj, LONG l, LONG t, LONG w, LONG h, ULONG flags) (a0,d0,d1,d2,d3,d4)
+==private
+VOID MUIP_private0() ()
+VOID MUIP_private1() ()
+VOID MUIP_private2() ()
+VOID MUIP_private3() ()
+==public
+LONG MUI_ObtainPen(struct MUI_RenderInfo * mri, struct MUI_PenSpec * spec, ULONG flags) (a0,a1,d0)
+VOID MUI_ReleasePen(struct MUI_RenderInfo * mri, LONG pen) (a0,d0)
+APTR MUI_AddClipping(struct MUI_RenderInfo * mri, WORD l, WORD t, WORD w, WORD h) (a0,d0,d1,d2,d3)
+VOID MUI_RemoveClipping(struct MUI_RenderInfo * mri, APTR h) (a0,a1)
+APTR MUI_AddClipRegion(struct MUI_RenderInfo * mri, struct Region * region) (a0,a1)
+VOID MUI_RemoveClipRegion(struct MUI_RenderInfo * mri, APTR region) (a0,a1)
+BOOL MUI_BeginRefresh(struct MUI_RenderInfo * mri, ULONG flags) (a0,d0)
+VOID MUI_EndRefresh(struct MUI_RenderInfo * mri, ULONG flags) (a0,d0)
+==private
+VOID MUIP_private4() ()
+VOID MUIP_private5() ()
+==public
+ULONG MUI_Show(Object * obj) (a0)
+ULONG MUI_Hide(Object * obj) (a0)
+BOOL MUI_LayoutObj(Object * obj, LONG l, LONG t, LONG w, LONG h, ULONG flags) (a0,d0,d1,d2,d3,d4)
+VOID MUI_Offset(Object * obj, LONG x, LONG y) (a0,d0,d1)
+==private
+VOID MUIP_private6() ()
+VOID MUIP_private7() ()
+VOID MUIP_private8() ()
+VOID MUIP_private9() ()
+VOID MUIP_private10() ()
+VOID MUIP_private11() ()
+VOID MUIP_private12() ()
+VOID MUIP_private13() ()
+VOID MUIP_private14() ()
+VOID MUIP_private15() ()
+VOID MUIP_private16() ()
+VOID MUIP_private17() ()
+VOID MUIP_private18() ()
+VOID MUIP_private19() ()
+VOID MUIP_private20() ()
+VOID MUIP_private21() ()
+VOID MUIP_private22() ()
+VOID MUIP_private23() ()
+VOID MUIP_private24() ()
+VOID MUIP_private25() ()
+VOID MUIP_private26() ()
+VOID MUIP_private27() ()
+VOID MUIP_private28() ()
+VOID MUIP_private29() ()
+VOID MUIP_private30() ()
+VOID MUIP_private31() ()
+VOID MUIP_private32() ()
+VOID MUIP_private33() ()
+VOID MUIP_private34() ()
+VOID MUIP_private35() ()
+VOID MUIP_private36() ()
+VOID MUIP_private37() ()
+VOID MUIP_private38() ()
+VOID MUIP_private39() ()
+VOID MUIP_private40() ()
+VOID MUIP_private41() ()
+VOID MUIP_private42() ()
+VOID MUIP_private43() ()
+VOID MUIP_private44() ()
+VOID MUIP_private45() ()
+VOID MUIP_private46() ()
+VOID MUIP_private47() ()
+VOID MUIP_private48() ()
+VOID MUIP_private49() ()
+==end

@@ -43,7 +43,7 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	assigns?: string; // list of assign with their directories, e.g. MUI: dh2:MUI,LIBS: dh2:LIBS DH2:MUI/Libs
 	bsdSocket?: boolean; // to ask WinUAE to make bsdsocket library available	
 	cmdList?: string; // list of commands (separated by commas) to be added at the end of the startup-sequence, e.g. df0:System/rexxmast
-	fullscreen?: boolean; // to open in fullscreen mode // DEBUG_JOB : a implementer
+	fullscreen?: boolean; // to open in fullscreen mode
 	width?: string; // width of the screen
 	height?: string; // height of the screen
 	startup?: string; // name of the startup-sequence
@@ -162,6 +162,21 @@ export class AmigaDebugSession extends LoggingDebugSession {
 		response.body.supportsWriteMemoryRequest = true;
 		this.sendResponse(response);
 	}
+	
+	protected getDh0Path(binPath: string): string {
+		let currentPath = path.resolve(binPath);
+
+		while (currentPath !== path.dirname(currentPath)) {
+			const candidate = path.join(currentPath, 'dh0');
+			if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+				return candidate; // returns the full path to 'dh0'
+			}
+			currentPath = path.dirname(currentPath); // get one level up
+		}
+
+		// Security in case 'dh0'cannot be found
+		throw new Error(`Directory 'dh0' not found in : ${binPath}`);
+	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): Promise<void> {
 		logger.setup(Logger.LogLevel.Warn, false);
@@ -170,7 +185,7 @@ export class AmigaDebugSession extends LoggingDebugSession {
 
 		const binPath: string = await vscode.commands.executeCommand("amiga.bin-path");
 		const objdumpPath = path.join(binPath, "opt/bin/m68k-amiga-elf-objdump");
-		const dh0Path = path.join(binPath, "..", "dh0");
+		const dh0Path = this.getDh0Path(binPath);
 
 		const gdbPath = path.join(binPath, "opt/bin/m68k-amiga-elf-gdb");
 		const gdbArgs = ['-q', '--interpreter=mi2', '-l', '10'];

@@ -1,4 +1,5 @@
 import { swizzle } from "../utils";
+import { CopperInstruction, CopperInstructionType, CopperMove } from "./copperDisassembler";
 import { CustomReadWrite, Custom, DMACONFlags, FMODEFlags, BPLCON3Flags, BPLCON0Flags, BPLCON2Flags, BPLCON0Bits } from "./custom";
 import { ChipsetFlags, CpuCyclesToDmaCycles, displayLeft, displayTop, DmaSubTypes, dmaTypes, DmaTypes, GetOcsColor, GetEhbColor, GetMemoryAfterDma, Memory, NR_DMA_REC_HPOS, NR_DMA_REC_VPOS, OcsToAga, GetAgaColor, ColorSwap } from "./dma";
 import { IProfileModel } from "./model";
@@ -6,6 +7,7 @@ import { IProfileModel } from "./model";
 export interface DeniseState {
 	freeze: number;
 	screenshot: boolean;
+	copper: boolean;
 	window: boolean;
 	planes: boolean[];
 	sprites: boolean[];
@@ -15,6 +17,7 @@ export interface DeniseState {
 export const DefaultDeniseState: DeniseState = {
 	freeze: -1,
 	screenshot: false,
+	copper: false,
 	window: true,
 	planes: [true, true, true, true, true, true, true, true],
 	sprites: [true, true, true, true, true, true, true, true],
@@ -42,7 +45,65 @@ export enum PixelSource {
 	outsideWindow,
 }
 
-export function getScreen(scale: number, model: IProfileModel, freezeModel: IProfileModel, time: number, state: DeniseState): [Uint8Array, Uint32Array, Uint8Array, Uint32Array, Uint32Array] {
+interface CopperType {
+	name: string;
+	color: number; 	// 0xAABBGGRR
+}
+
+enum CopperTypes {
+	WAIT_SKIP,
+	MOVE,
+	COLOR,
+	BLITTER,
+	BITPLANE,
+	SPRITE,
+}
+
+export const copperTypes: Map<number, CopperType> = new Map([
+	[CopperTypes.WAIT_SKIP, {
+		name: 'Wait/Skip',
+		color: 0xff0000ff
+	}],
+	[CopperTypes.MOVE, {
+		name: 'Move',
+		color: 0xff00ffff
+	}],
+	[CopperTypes.COLOR, {
+		name: 'Color',
+		color: 0xff00ff00
+	}],
+	[CopperTypes.BLITTER, {
+		name: 'Blitter',
+		color: 0xffff0000
+	}],
+	[CopperTypes.BITPLANE, {
+		name: 'Bitplane',
+		color: 0xffff00ff
+	}],
+	[CopperTypes.SPRITE, {
+		name: 'Sprite',
+		color: 0xffffffff
+	}],
+]);
+
+function GetCopperType(first: number, second: number): CopperType {
+	if(first & 0x0001) {
+		return copperTypes.get(CopperTypes.WAIT_SKIP);
+	} else {
+		const reg = first & 0x01fe;
+		return GetCopperTypeForReg(reg);
+	}
+}
+
+function GetCopperTypeForReg(reg: number): CopperType {
+	if(Custom.IsColor(reg)) return copperTypes.get(CopperTypes.COLOR);
+	if(Custom.IsBlitter(reg)) return copperTypes.get(CopperTypes.BLITTER);
+	if(Custom.IsBitplane(reg)) return copperTypes.get(CopperTypes.BITPLANE);
+	if(Custom.IsSprite(reg)) return copperTypes.get(CopperTypes.SPRITE);
+	return copperTypes.get(CopperTypes.MOVE);
+}
+
+export function getScreen(scale: number, model: IProfileModel, freezeModel: IProfileModel, time: number, state: DeniseState): [Uint8Array, Uint32Array, Uint8Array, Uint32Array, Uint32Array, Uint32Array] {
 	const canvasScaleX = scale / 2;
 	const canvasScaleY = scale;
 	const canvasWidth = NR_DMA_REC_HPOS * 4 * canvasScaleX;
@@ -53,11 +114,21 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 	const pixels = new Uint8Array(NR_DMA_REC_HPOS * 4 * NR_DMA_REC_VPOS);
 	const pixelsRgb = new Uint32Array(canvasWidth * canvasHeight);
 	const pixelsDma = new Uint32Array(canvasWidth * canvasHeight);
+	const pixelsCopper = new Uint32Array(canvasWidth * canvasHeight);
 	const putDma = (x: number, y: number, rgb: number) => {
 		for (let yy = 0; yy < canvasScaleY; yy++) {
 			for (let xx = 0; xx < canvasScaleX * 4; xx++) {
 				const offset = (((y * canvasScaleY + yy) * canvasWidth) + x * canvasScaleX * 4 + xx);
 				pixelsDma[offset] = rgb;
+			}
+		}
+	};
+
+	const putCopper = (x: number, y: number, rgb: number) => {
+		for (let yy = 0; yy < canvasScaleY; yy++) {
+			for (let xx = 0; xx < canvasScaleX * 4; xx++) {
+				const offset = (((y * canvasScaleY + yy) * canvasWidth) + x * canvasScaleX * 4 + xx);
+				pixelsCopper[offset] = rgb;
 			}
 		}
 	};
@@ -88,7 +159,8 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 	const bplShifterHi  = [0, 0, 0, 0, 0, 0, 0, 0];
 	const bplScroller   = [0, 0, 0, 0, 0, 0, 0, 0];
 	const bplScrollerHi = [0, 0, 0, 0, 0, 0, 0, 0];
-	const regDMACON  = Custom.ByName("DMACON") .adr - 0xdff000;
+	const regDMACON  = Custom.ByName("DMACON").adr - 0xdff000;
+	const regCOPINS  = Custom.ByName("COPINS").adr - 0xdff000;
 	const regCOPJMP1 = Custom.ByName("COPJMP1").adr - 0xdff000;
 	const regCOPJMP2 = Custom.ByName("COPJMP2").adr - 0xdff000;
 	const regBPLCON0 = Custom.ByName("BPLCON0").adr - 0xdff000;
@@ -108,12 +180,12 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 	const regDIWHIGH = Custom.ByName("DIWHIGH").adr - 0xdff000; // ECS
 	const regFMODE   = Custom.ByName("FMODE")  .adr - 0xdff000; // ECS
 
-	const regSPR0POS   = Custom.ByName("SPR0POS") .adr- 0xdff000;
-	const regSPR0CTL   = Custom.ByName("SPR0CTL") .adr- 0xdff000;
+	const regSPR0POS   = Custom.ByName("SPR0POS") .adr - 0xdff000;
+	const regSPR0CTL   = Custom.ByName("SPR0CTL") .adr - 0xdff000;
 	const regSPR0DATA  = Custom.ByName("SPR0DATA").adr - 0xdff000;
 	const regSPR0DATB  = Custom.ByName("SPR0DATB").adr - 0xdff000;
 	const regSPR7DATB  = Custom.ByName("SPR7DATB").adr - 0xdff000;
-	const spriteStride = Custom.ByName("SPR1POS") .adr- Custom.ByName("SPR0POS").adr;
+	const spriteStride = Custom.ByName("SPR1POS") .adr - Custom.ByName("SPR0POS").adr;
 
 	interface Sprite {
 		armed: boolean;
@@ -202,6 +274,7 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 						ignoreCopper--;
 						continue;
 					}
+
 					if(dmaRecord.reg === regCOPJMP1 || dmaRecord.reg === regCOPJMP2)
 						ignoreCopper = 2;
 				} 
@@ -222,7 +295,7 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 						customRegs[regDMACON >>> 1] |= dmaRecord.dat & 0x7FFF;
 					else
 						customRegs[regDMACON >>> 1] &= ~dmaRecord.dat;
-				} else if(Custom.ByOffs(dmaRecord.reg)?.rw & CustomReadWrite.write) {
+				} else if(Custom.ByOffs(dmaRecord.reg)?.rw & CustomReadWrite.write) { // custom register write
 					if(dmaRecord.reg >= regCOLOR00 && dmaRecord.reg < regCOLOR00 + 32 * 2) {
 						if(chipsetFlags & ChipsetFlags.AGA) {
 							const c = ((dmaRecord.reg - regCOLOR00) >>> 1) + (customRegs[regBPLCON3 >>> 1] >>> 13) * 32;
@@ -246,6 +319,12 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 						continue;
 					const dmaColor = dmaSubtype.color;
 					putDma(cycleX, cycleY, dmaColor);
+				}
+				if(dmaRecord.type === DmaTypes.COPPER) {
+					if(dmaRecord.extra === DmaSubTypes.COPPER_WAIT)
+						putCopper(cycleX, cycleY, copperTypes.get(CopperTypes.WAIT_SKIP).color);
+					else if(dmaRecord.extra === DmaSubTypes.COPPER && dmaRecord.reg !== regCOPINS)
+						putCopper(cycleX, cycleY, GetCopperTypeForReg(dmaRecord.reg).color);
 				}
 			}
 			// vpos, hpos - https://www.techtravels.org/2012/04/progress-on-amiga-vsc-made-this-weekend-vsync-problem-persists/ 
@@ -532,5 +611,5 @@ export function getScreen(scale: number, model: IProfileModel, freezeModel: IPro
 		}
 	}
 	console.timeEnd('denise');
-	return [pixelSources, pixelPtrs, pixels, pixelsRgb, pixelsDma];
+	return [pixelSources, pixelPtrs, pixels, pixelsRgb, pixelsDma, pixelsCopper];
 }

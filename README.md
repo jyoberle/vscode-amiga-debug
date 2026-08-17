@@ -13,6 +13,7 @@ This fork is based on the excellent vscode-amiga-debug extension [vscode-amiga-d
 - Development for Amiga OS 3.2 is supported.
 - The startup-sequence can be fully customized.
 - RTG (retargetable graphics) mode is available.
+- Ability to switch back to GCC 13.2.
 	
 ## Quick-start
 0. Install the extension from the Visual Studio Code Marketplace
@@ -30,6 +31,7 @@ This fork is based on the excellent vscode-amiga-debug extension [vscode-amiga-d
 - `"bsdSocket"` can be set to true (e.g. "bsdSocket":true) to enable the bsdsocket.library of UAE.
 - Still in `.vscode/launch.json`, you can provide a customized startup-sequence through `"startup"`, for example "startup":"startup-sequence-os3.1-hdd.txt" (three examples of startup-sequences are provided).
 - Using `"width"` and `"height"`, you can specify the dimensions of the window of UAE and `"fullscreen"` opens the UAE window in fullscreen mode (these latter options are really useful in RTG mode; see below).
+- Since GCC 15.2 enforces stricter C coding rules (which may cause older code to break), you can switch back to GCC 13.2. Open the Visual Studio Code settings (Ctrl + ,), navigate to Extensions -> Amiga C/C++ Compile, Debug & Profile, and set "Amiga: Gcc Version" to "13.2". Refer to the README.txt file mentioned below for additional details.
 
 Note: after having followed the **Quick-start** guidelines above, you'll find in the list of created files a README.txt file detailing the usage of all these options, as well as some tips for developing Amiga programs with this extension.
 
@@ -75,6 +77,9 @@ C:assign LOCALE: DH2:Locale dh0:MUI/Locale<br />
 C:assign PRINTERS: DEVS:Printers<br />
 
 ## Change Log (fork only)
+
+### 1.8.3
+- Ability to switch back to GCC 13.2
 
 ### 1.7.8
 - Compatible with Amiga OS 3.2
